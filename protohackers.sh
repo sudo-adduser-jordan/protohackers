@@ -24,7 +24,7 @@ java -jar your-app.jar --host 127.0.0.1 --port 8080
 # or
 # curl http://<your-public-ip>:8080
 
-
-
-
+# apt install docker
+# docker build -t my-java-app .
+# docker run -p 8080:8080 my-java-app
 
