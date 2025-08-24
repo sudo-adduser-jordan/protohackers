@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
         "protohackers"
-    ]
+    ],
+    "java.compile.nullAnalysis.mode": "automatic"
 }
