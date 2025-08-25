@@ -16,7 +16,9 @@ sdk install java 24.0.2-graalce
 
 # build
 git clone https://github.com/sudo-adduser-jordan/protohackers ~/protohackers
-cd ~/protohackers 
+cd ~/protohackers
+# git checkout 970df26b9dcfb0fbac74c266a5915fdbb3a24cb3 # solution 0
+# git checkout 970df26b9dcfb0fbac74c266a5915fdbb3a24cb3 # solution 1
 ./gradlew build
 
 # open port
