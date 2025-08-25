@@ -14,8 +14,6 @@ public class ServerRunnable implements Runnable {
 
     public void run() {
         try (
-            // BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            // PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
             InputStream input = socket.getInputStream();
             OutputStream output = socket.getOutputStream();
         ) {
@@ -25,12 +23,6 @@ public class ServerRunnable implements Runnable {
                 output.write(inputByte);
                 // logger.info("Sent to client: " + inputByte);
             }
-            // String message;
-            // while ((message = in.readLine()) != null) {
-            //     logger.info("Received from client: " + message);
-            //     out.println(message);
-            //     logger.info("Sent to client: " + message);
-            // }
         } 
         catch (IOException e) 
         {
