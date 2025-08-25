@@ -1,10 +1,11 @@
 package server;
 
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.logging.ConsoleHandler;
+import java.net.ServerSocket;
 import java.util.logging.Logger;
+import java.util.logging.ConsoleHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Server {
     private static final Logger logger = Logger.getLogger(Server.class.getName());
@@ -25,8 +26,13 @@ public class Server {
             {
                 Socket clientSocket = serverSocket.accept();
                 logger.info("Client connected: " + clientSocket.getInetAddress());
-                Thread thread = new Thread(new ServerRunnable(clientSocket));
+          
+                ObjectMapper objectMapper = new ObjectMapper();
+                logger.info("JSON mapper created for client: " + clientSocket.getInetAddress());
+
+                Thread thread = new Thread(new ServerRunnable(clientSocket, objectMapper));
                 logger.info("Thread created: " + thread.getName());
+
                 thread.start();
             }
         } 
