@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # deps
 apt update 
 apt upgrade 
@@ -13,10 +15,14 @@ source "$HOME/.sdkman/bin/sdkman-init.sh"
 sdk install java 24.0.2-graalce
 
 # build
-git clone https:github.com/sudo-adduser-jordan/protohackers ~/protohackers
-gradle -p ~/protohackers build 
- 
+git clone https://github.com/sudo-adduser-jordan/protohackers ~/protohackers
+~/./protohackers/gradlew 
+
+# open port
+ufw allow 42069/tcp
+
 # run
-java -jar app/build/libs/app.jar 
+# java -jar ~/protohackers/app/build/libs/app.jar 
+java -jar ~/protohackers/app/build/libs/app.jar &
 # pkill -f server.jar
 
