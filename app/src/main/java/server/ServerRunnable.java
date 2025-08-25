@@ -21,9 +21,9 @@ public class ServerRunnable implements Runnable {
         ) {
             int inputByte;
             while ((inputByte = input.read()) != -1) {
-                logger.info("Received from client: " + inputByte);
+                // logger.info("Received from client: " + inputByte);
                 output.write(inputByte);
-                logger.info("Sent to client: " + inputByte);
+                // logger.info("Sent to client: " + inputByte);
             }
             // String message;
             // while ((message = in.readLine()) != null) {

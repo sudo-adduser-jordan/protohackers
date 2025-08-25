@@ -16,7 +16,8 @@ sdk install java 24.0.2-graalce
 
 # build
 git clone https://github.com/sudo-adduser-jordan/protohackers ~/protohackers
-~/./protohackers/gradlew 
+cd ~/protohackers 
+./gradlew build
 
 # open port
 ufw allow 42069/tcp
