@@ -39,6 +39,9 @@ public class ServerRunnable implements Runnable {
                 boolean isPrime = isPrimeByBigInteger(requestJSON.getNumber());
                 ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrime);
                 String response = objectMapper.writeValueAsString(responseJSON);
+                logger.info(responseJSON.toString());
+             
+                output.write(response.getBytes());
                 output.write((response + "\n").getBytes());
                 output.flush();
 
