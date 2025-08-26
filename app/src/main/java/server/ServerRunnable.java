@@ -34,16 +34,16 @@ public class ServerRunnable implements Runnable {
             BufferedOutputStream output = new BufferedOutputStream(outputStream);
 
             while(!socket.isClosed()) {
-            
-            String response = input.readLine();
-            if (response == null ) { 
-                logger.warning("Request: " + null);
-                logger.severe("Client disconnected: " + socket.getInetAddress());
-                socket.close();
-            } // check null
-            logger.warning("Request: " + response);
-
             try {
+                String response = input.readLine();
+                if (response == null ) { 
+                    logger.warning("Request: " + null);
+                    logger.severe("Client disconnected: " + socket.getInetAddress());
+                    socket.close();
+                    logger.warning("Request: " + response);
+                    return;
+                } 
+
                 RequestJSON requestJSON = objectMapper.readValue(response, RequestJSON.class);
                 boolean isPrime = isPrimeByBigInteger(requestJSON.getNumber());
 
@@ -55,11 +55,6 @@ public class ServerRunnable implements Runnable {
 
             }  catch (Exception e) {
                 logger.warning("Invalid JSON: " + e.toString());
-                logger.warning("Response: " + response);
-                
-                if (response != null ) { 
-                    output.write(response.getBytes());
-                }
                 output.flush();
                 socket.close();
                 logger.severe("Client disconnected: " + socket.getInetAddress());
