@@ -18,5 +18,4 @@ public class RequestJSON {
         this.method = method;
         this.number = number;
     }
-
 }
