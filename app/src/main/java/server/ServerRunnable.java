@@ -41,7 +41,7 @@ public class ServerRunnable implements Runnable {
                 logger.warning("Request: " + null);
                 logger.severe("Client disconnected: " + socket.getInetAddress());
                 socket.close();
-            } // check null
+            } 
             logger.warning("Request: " + response);
 
             try {
@@ -50,25 +50,20 @@ public class ServerRunnable implements Runnable {
                     throw new Exception("method does not equal 'isPrime'");
                 }
 
-                // boolean isPrime = isPrimeByBigInteger(requestJSON.getNumber());
                 boolean isPrime = isPrimeDouble(requestJSON.getNumber());
-
 
                 ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrime);
                 logger.warning("Response: " + objectMapper.writeValueAsString(responseJSON));
                 
                 output.write((objectMapper.writeValueAsString(responseJSON) + "\n").getBytes());
-                // output.write(objectMapper.writeValueAsString(responseJSON).getBytes());
                 output.flush();
 
             }  catch (Exception e) {
                 logger.warning("Invalid JSON: " + e.toString());
                 logger.warning("Response: " + response);
                 
-                if (response != null ) { 
-                    // output.write(response.getBytes());
-                    output.write((response + "\n").getBytes());
-                }
+                if (response != null ) output.write((response + "\n").getBytes());
+                
                 socket.close();
                 logger.severe("Client disconnected: " + socket.getInetAddress());
             }
@@ -82,16 +77,14 @@ public class ServerRunnable implements Runnable {
         } 
     }
 
-    // private void handleClient() {};
-
-    private void echoResponse(InputStream input, OutputStream output) throws IOException
-    {
-        int inputByte;
-        while ((inputByte = input.read()) != -1) {
-            output.write(inputByte);
-        }
-        output.flush();
-    };
+    // private void echoResponse(InputStream input, OutputStream output) throws IOException
+    // {
+    //     int inputByte;
+    //     while ((inputByte = input.read()) != -1) {
+    //         output.write(inputByte);
+    //     }
+    //     output.flush();
+    // }
 
     // private boolean isPrimeByBigInteger(int number) 
     // {
@@ -101,13 +94,11 @@ public class ServerRunnable implements Runnable {
     //     BigInteger bigInt = BigInteger.valueOf(number);
     //     return bigInt.isProbablePrime(100); // effecient handling of small and large primes
     // }
-    private boolean isPrimeDouble(double number) {
-    if (number != Math.floor(number) || number <= 1) {
-        // Non-integer or less than or equal to 1, not prime
-        return false;
-    }
-    BigInteger bigInt = BigInteger.valueOf((long) number);
-    return bigInt.isProbablePrime(100);
-}
 
+    private boolean isPrimeDouble(double number) 
+    {
+        if (number != Math.floor(number) || number <= 1) return false;
+        BigInteger bigInt = BigInteger.valueOf((long) number);
+        return bigInt.isProbablePrime(100);
+    }
 }

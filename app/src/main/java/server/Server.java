@@ -25,8 +25,8 @@ public class Server {
                 logger.info("Client connected: " + clientSocket.getInetAddress());
           
                 ObjectMapper objectMapper = new ObjectMapper();
-                objectMapper.disable(MapperFeature.ALLOW_COERCION_OF_SCALARS);
                 objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                objectMapper.disable(MapperFeature.ALLOW_COERCION_OF_SCALARS);
                 logger.info("JSON mapper created for client: " + clientSocket.getInetAddress());
 
                 Thread thread = new Thread(new ServerRunnable(clientSocket, objectMapper));
