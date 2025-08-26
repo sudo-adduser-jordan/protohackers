@@ -23,3 +23,37 @@ application.mainClass = "server.Server"
 tasks.named<Test>("test") {
     useJUnitPlatform()
 }
+
+tasks.register<JavaExec>("d0") {
+    group = "application"
+    description = "Run server.d1.Server"
+    mainClass.set("server.d1.Server")
+    classpath = sourceSets.main.get().runtimeClasspath
+}
+
+
+tasks.register<JavaExec>("d1") {
+    group = "application"
+    description = "Run server.d1.Server"
+    mainClass.set("server.d1.Server")
+    classpath = sourceSets.main.get().runtimeClasspath
+}
+
+tasks.register<JavaExec>("d2") {
+    group = "application"
+    description = "Run server.d2.Server"
+    mainClass.set("server.d2.Server")
+    classpath = sourceSets.main.get().runtimeClasspath
+}
+
+tasks.register<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("buildFatJar") {
+    archiveFileName.set("my-application-all.jar")
+    mergeServiceFiles()
+    manifest {
+        attributes["Main-Class"] = "server.Server"
+    }
+}
+
+tasks.named("build") {
+    dependsOn("buildFatJar")
+}

@@ -1,4 +1,4 @@
-package server;
+package server.d2;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

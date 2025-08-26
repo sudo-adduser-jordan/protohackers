@@ -1,4 +1,5 @@
-package server;
+
+package server.d2;
 
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Formatter;

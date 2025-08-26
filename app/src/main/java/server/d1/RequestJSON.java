@@ -1,4 +1,4 @@
-package server;
+package server.d1;
 
 import lombok.Data;
 

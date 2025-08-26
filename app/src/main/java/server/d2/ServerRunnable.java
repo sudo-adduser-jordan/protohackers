@@ -1,4 +1,4 @@
-package server;
+package server.d2;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;

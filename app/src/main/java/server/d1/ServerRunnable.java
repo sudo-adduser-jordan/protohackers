@@ -1,0 +1,103 @@
+package server.d1;
+
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.math.BigInteger;
+import java.net.Socket;
+import java.util.Objects;
+import java.util.logging.Logger;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+public class ServerRunnable implements Runnable {
+    private static final Logger logger = ServerLogFormatter.getLogger(Server.class);
+    private Socket socket;
+    private ObjectMapper objectMapper;
+
+    public ServerRunnable(Socket socket, ObjectMapper objectMapper) 
+    { 
+        this.socket = socket;
+        this.objectMapper = objectMapper;
+    };
+
+    public void run() {
+        try 
+        {
+            InputStream inputStream = socket.getInputStream();
+            OutputStream outputStream = socket.getOutputStream();
+
+            BufferedReader input = new BufferedReader(new InputStreamReader(inputStream));
+            BufferedOutputStream output = new BufferedOutputStream(outputStream);
+
+            while(!socket.isClosed()) {
+            
+            String response = input.readLine();
+            if (response == null ) { 
+                logger.warning("Request: " + null);
+                logger.severe("Client disconnected: " + socket.getInetAddress());
+                socket.close();
+            } 
+            logger.warning("Request: " + response);
+
+            try {
+                RequestJSON requestJSON = objectMapper.readValue(response, RequestJSON.class);
+                if (!Objects.equals(requestJSON.getMethod(), "isPrime")) {
+                    throw new Exception("method does not equal 'isPrime'");
+                }
+
+                boolean isPrime = isPrimeDouble(requestJSON.getNumber());
+
+                ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrime);
+                logger.warning("Response: " + objectMapper.writeValueAsString(responseJSON));
+                
+                output.write((objectMapper.writeValueAsString(responseJSON) + "\n").getBytes());
+                output.flush();
+
+            }  catch (Exception e) {
+                logger.warning("Invalid JSON: " + e.toString());
+                logger.warning("Response: " + response);
+                
+                if (response != null ) output.write((response + "\n").getBytes());
+                
+                socket.close();
+                logger.severe("Client disconnected: " + socket.getInetAddress());
+            }
+            logger.info("Response sent to : " + socket.getInetAddress());
+        }
+        } 
+        catch (IOException e) 
+        {
+            logger.warning("Connection error with client: " + socket.getInetAddress());
+            e.printStackTrace();
+        } 
+    }
+
+    // private void echoResponse(InputStream input, OutputStream output) throws IOException
+    // {
+    //     int inputByte;
+    //     while ((inputByte = input.read()) != -1) {
+    //         output.write(inputByte);
+    //     }
+    //     output.flush();
+    // }
+
+    // private boolean isPrimeByBigInteger(int number) 
+    // {
+    //     if (number <= 1) {
+    //         return false;
+    //     }
+    //     BigInteger bigInt = BigInteger.valueOf(number);
+    //     return bigInt.isProbablePrime(100); // effecient handling of small and large primes
+    // }
+
+    private boolean isPrimeDouble(double number) 
+    {
+        if (number != Math.floor(number) || number <= 1) return false;
+        BigInteger bigInt = BigInteger.valueOf((long) number);
+        return bigInt.isProbablePrime(100);
+    }
+}
