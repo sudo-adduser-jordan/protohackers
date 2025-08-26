@@ -22,5 +22,4 @@ application.mainClass = "server.Server"
 
 tasks.named<Test>("test") {
     useJUnitPlatform()
-    failOnNoDiscoveredTests = false
 }
