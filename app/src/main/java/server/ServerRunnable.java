@@ -45,7 +45,12 @@ public class ServerRunnable implements Runnable {
 
             try {
                 RequestJSON requestJSON = objectMapper.readValue(response, RequestJSON.class);
+                if (requestJSON.getMethod() != "isPrime") {
+                    throw new Exception("method does not equal 'isPrime'");
+                }
+
                 boolean isPrime = isPrimeByBigInteger(requestJSON.getNumber());
+
 
                 ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrime);
                 logger.warning("Response: " + objectMapper.writeValueAsString(responseJSON));
@@ -62,7 +67,6 @@ public class ServerRunnable implements Runnable {
                     // output.write(response.getBytes());
                     output.write((response + "\n").getBytes());
                 }
-                output.flush();
                 socket.close();
                 logger.severe("Client disconnected: " + socket.getInetAddress());
             }

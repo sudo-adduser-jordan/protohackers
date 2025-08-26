@@ -1,9 +1,12 @@
 package server;
 
 import lombok.Data;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @Data // {"method":"isPrime","number":123} 
+@JsonPropertyOrder({ "method", "number" })
 public class RequestJSON {
     private String method;    
     private int number;
