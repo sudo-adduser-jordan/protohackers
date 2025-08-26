@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.net.Socket;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,7 +46,7 @@ public class ServerRunnable implements Runnable {
 
             try {
                 RequestJSON requestJSON = objectMapper.readValue(response, RequestJSON.class);
-                if (requestJSON.getMethod() != "isPrime") {
+                if (!Objects.equals(requestJSON.getMethod(), "isPrime")) {
                     throw new Exception("method does not equal 'isPrime'");
                 }
 
