@@ -20,13 +20,13 @@ git clone https://github.com/sudo-adduser-jordan/protohackers ~/protohackers
 cd ~/protohackers
 # git checkout 970df26b9dcfb0fbac74c266a5915fdbb3a24cb3 # solution 0
 # git checkout 970df26b9dcfb0fbac74c266a5915fdbb3a24cb3 # solution 1
-gradle shadowJar
+# gradle shadowJar
 
 # open port
 ufw allow 42069/tcp
 
 # run
-java -jar ~/protohackers/app/build/libs/app-all.jar &
+./gradlew run
 # gradle run
 # pkill -f server.jar
 
