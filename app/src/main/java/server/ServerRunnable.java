@@ -57,7 +57,9 @@ public class ServerRunnable implements Runnable {
                 logger.warning("Invalid JSON: " + e.toString());
                 logger.warning("Response: " + response);
                 
-                output.write(response.getBytes());
+                if (response != null ) { 
+                    output.write(response.getBytes());
+                }
                 output.flush();
                 socket.close();
                 logger.severe("Client disconnected: " + socket.getInetAddress());
