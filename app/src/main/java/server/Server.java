@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.ServerSocket;
 import java.util.logging.Logger;
-
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Server {
@@ -24,7 +22,6 @@ public class Server {
                 logger.info("Client connected: " + clientSocket.getInetAddress());
           
                 ObjectMapper objectMapper = new ObjectMapper();
-                objectMapper.configure(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES, true);
                 logger.info("JSON mapper created for client: " + clientSocket.getInetAddress());
 
                 Thread thread = new Thread(new ServerRunnable(clientSocket, objectMapper));
