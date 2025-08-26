@@ -11,8 +11,8 @@ repositories {
 }
 
 dependencies {
-    // testImplementation(libs.junit.jupiter)
-    // testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     implementation(libs.guava)
     implementation("com.fasterxml.jackson.core:jackson-databind:2.19.2")
 }
@@ -20,7 +20,7 @@ dependencies {
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 application.mainClass = "server.Server"
 
-// tasks.named<Test>("test") {
-//     useJUnitPlatform()
-//     failOnNoDiscoveredTests = false
-// }
+tasks.named<Test>("test") {
+    useJUnitPlatform()
+    failOnNoDiscoveredTests = false
+}

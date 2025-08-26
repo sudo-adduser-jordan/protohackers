@@ -34,27 +34,34 @@ public class ServerRunnable implements Runnable {
             BufferedOutputStream output = new BufferedOutputStream(outputStream);
 
             while(!socket.isClosed()) {
-            try {
-                String response = input.readLine();
-                if (response == null ) { 
-                    logger.warning("Request: " + null);
-                    logger.severe("Client disconnected: " + socket.getInetAddress());
-                    socket.close();
-                    logger.warning("Request: " + response);
-                    return;
-                } 
+            
+            String response = input.readLine();
+            if (response == null ) { 
+                logger.warning("Request: " + null);
+                logger.severe("Client disconnected: " + socket.getInetAddress());
+                socket.close();
+            } // check null
+            logger.warning("Request: " + response);
 
+            try {
                 RequestJSON requestJSON = objectMapper.readValue(response, RequestJSON.class);
                 boolean isPrime = isPrimeByBigInteger(requestJSON.getNumber());
 
                 ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrime);
                 logger.warning("Response: " + objectMapper.writeValueAsString(responseJSON));
                 
-                output.write(objectMapper.writeValueAsString(responseJSON).getBytes());
+                output.write((objectMapper.writeValueAsString(responseJSON) + "\n").getBytes());
+                // output.write(objectMapper.writeValueAsString(responseJSON).getBytes());
                 output.flush();
 
             }  catch (Exception e) {
                 logger.warning("Invalid JSON: " + e.toString());
+                logger.warning("Response: " + response);
+                
+                if (response != null ) { 
+                    // output.write(response.getBytes());
+                    output.write((response + "\n").getBytes());
+                }
                 output.flush();
                 socket.close();
                 logger.severe("Client disconnected: " + socket.getInetAddress());
@@ -68,7 +75,6 @@ public class ServerRunnable implements Runnable {
             e.printStackTrace();
         } 
     }
-
 
     // private void handleClient() {};
 
