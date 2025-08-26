@@ -36,6 +36,11 @@ public class ServerRunnable implements Runnable {
             while(!socket.isClosed()) {
             
             String response = input.readLine();
+            if (response == null ) { 
+                logger.warning("Request: " + null);
+                logger.severe("Client disconnected: " + socket.getInetAddress());
+                socket.close();
+            } // check null
             logger.warning("Request: " + response);
 
             try {
