@@ -89,6 +89,9 @@ public class ServerRunnable implements Runnable {
 
     private boolean isPrimeByBigInteger(int number) 
     {
+        if (number <= 1) {
+            return false;
+        }
         BigInteger bigInt = BigInteger.valueOf(number);
         return bigInt.isProbablePrime(100); // effecient handling of small and large primes
     }
