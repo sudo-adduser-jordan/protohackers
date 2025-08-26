@@ -26,7 +26,7 @@ gradle shadowJar
 ufw allow 42069/tcp
 
 # run
-java -jar ~/protohackers/app/build/libs/app-alls.jar &
+java -jar ~/protohackers/app/build/libs/app-all.jar &
 # gradle run
 # pkill -f server.jar
 
