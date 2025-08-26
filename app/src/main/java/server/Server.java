@@ -4,18 +4,12 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.ServerSocket;
 import java.util.logging.Logger;
-import java.util.logging.ConsoleHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Server {
-    private static final Logger logger = Logger.getLogger(Server.class.getName());
+    private static final Logger logger = ServerLogFormatter.getLogger(Server.class);
     
     public static void main(String[] args) {
-        ConsoleHandler handler = new ConsoleHandler();
-        handler.setFormatter(new ServerLogFormatter());
-        logger.addHandler(handler);
-        logger.setUseParentHandlers(false); 
-
         final int PORT = 42069;
 
         try (ServerSocket serverSocket = new ServerSocket(PORT)) 

@@ -3,9 +3,7 @@ package server;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-// {"method":"isPrime","prime":false} response
-
-@Data
+@Data // {"method":"isPrime","prime":false}
 @AllArgsConstructor
 public class ResponseJSON {
     private String method;
