@@ -5,11 +5,9 @@ import java.net.Socket;
 import java.net.ServerSocket;
 import java.util.logging.Logger;
 
-import com.fasterxml.jackson.annotation.JsonFormat.Feature;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.cfg.CoercionAction;
-import com.fasterxml.jackson.databind.cfg.CoercionInputShape;
 
 public class Server {
     private static final Logger logger = ServerLogFormatter.getLogger(Server.class);
@@ -28,6 +26,7 @@ public class Server {
           
                 ObjectMapper objectMapper = new ObjectMapper();
                 objectMapper.disable(MapperFeature.ALLOW_COERCION_OF_SCALARS);
+                objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
                 logger.info("JSON mapper created for client: " + clientSocket.getInetAddress());
 
                 Thread thread = new Thread(new ServerRunnable(clientSocket, objectMapper));
