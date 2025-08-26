@@ -7,10 +7,16 @@ import java.util.logging.Logger;
 
 public class Server {
     private static final Logger logger = ServerLogFormatter.getLogger(Server.class);
+    private final int PORT = 42069;
+    private ServerSocket serverSocket;
     
     public static void main(String[] args) {
-        final int PORT = 42069;
+        Server server = new Server();
+        server.startServer(); 
+    }
 
+    public void startServer()
+    {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) 
         {
             logger.info("Server started: PORT: " + PORT);
@@ -33,4 +39,14 @@ public class Server {
             e.printStackTrace();
         }
     }
+
+    public void stopServer()
+    {
+        try {
+            if (serverSocket != null && !serverSocket.isClosed()) serverSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

@@ -22,6 +22,11 @@ application.mainClass = "server.Server"
 
 tasks.named<Test>("test") {
     useJUnitPlatform()
+    testLogging {
+        events("PASSED", "FAILED", "SKIPPED")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showStandardStreams = true
+    }
 }
 
 tasks.register<JavaExec>("d0") {
@@ -57,3 +62,4 @@ tasks.register<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("buil
 tasks.named("build") {
     dependsOn("buildFatJar")
 }
+
