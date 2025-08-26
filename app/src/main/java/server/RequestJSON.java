@@ -9,11 +9,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({ "method", "number" })
 public class RequestJSON {
     private String method;    
-    private int number;
+    private double number;
 
     public RequestJSON(
         @JsonProperty(value= "method", required = true)String method,
-        @JsonProperty(value= "number",required = true)int number
+        @JsonProperty(value= "number",required = true)double number
     ) {
         this.method = method;
         this.number = number;

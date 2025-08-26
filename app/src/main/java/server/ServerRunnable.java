@@ -50,7 +50,8 @@ public class ServerRunnable implements Runnable {
                     throw new Exception("method does not equal 'isPrime'");
                 }
 
-                boolean isPrime = isPrimeByBigInteger(requestJSON.getNumber());
+                // boolean isPrime = isPrimeByBigInteger(requestJSON.getNumber());
+                boolean isPrime = isPrimeDouble(requestJSON.getNumber());
 
 
                 ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrime);
@@ -92,12 +93,21 @@ public class ServerRunnable implements Runnable {
         output.flush();
     };
 
-    private boolean isPrimeByBigInteger(int number) 
-    {
-        if (number <= 1) {
-            return false;
-        }
-        BigInteger bigInt = BigInteger.valueOf(number);
-        return bigInt.isProbablePrime(100); // effecient handling of small and large primes
+    // private boolean isPrimeByBigInteger(int number) 
+    // {
+    //     if (number <= 1) {
+    //         return false;
+    //     }
+    //     BigInteger bigInt = BigInteger.valueOf(number);
+    //     return bigInt.isProbablePrime(100); // effecient handling of small and large primes
+    // }
+    private boolean isPrimeDouble(double number) {
+    if (number != Math.floor(number) || number <= 1) {
+        // Non-integer or less than or equal to 1, not prime
+        return false;
     }
+    BigInteger bigInt = BigInteger.valueOf((long) number);
+    return bigInt.isProbablePrime(100);
+}
+
 }
