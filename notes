@@ -1,11 +1,9 @@
-
-
-
-curl -X POST -H "Content-Type: application/json" -d '{"method":"isPrime","number":123}' http://localhost:42069
-
+./gradlew wrapper --gradle-version latest
 telnet localhost 42069
 nc localhost 42069
 
 {"method":"isPrime","number":123}
-
 {"method":"isPrime","prime":false} 
+
+
+
