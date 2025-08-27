@@ -76,7 +76,7 @@ public class ServerRunnable implements Runnable
     public static byte[] messageToResponse(Integer value)
     {
         if (value == null) return ByteBuffer.allocate(RESPONSE_LENGTH).order(ByteOrder.BIG_ENDIAN).putInt(0).array();
-        return new byte[4];
+        return ByteBuffer.allocate(RESPONSE_LENGTH).order(ByteOrder.BIG_ENDIAN).putInt(value).array();
     }
     
     // Byte: | 0 | 1 2 3 4 | 5 6 7 8 |

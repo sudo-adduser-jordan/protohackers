@@ -2,11 +2,11 @@
 
 # deps
 apt update 
-apt upgrade 
+apt upgrade -y 
 apt install -y git 
-apt install -y curl 
 apt install -y zip
 apt install -y unzip
+apt install -y curl 
 
 # open port
 ufw allow 42069/tcp
@@ -20,10 +20,10 @@ sdk install gradle 9.0.0
 # build
 git clone https://github.com/sudo-adduser-jordan/protohackers ~/protohackers
 cd ~/protohackers
-./gradlew run
+gradle ~/protohackers d2
+# gradle ~/protohackers d1
+# gradle ~/protohackers d0
+# gradle ~/Documents/GitHub/protohackers d2
 # git checkout 970df26b9dcfb0fbac74c266a5915fdbb3a24cb3 # solution 0
 # git checkout 970df26b9dcfb0fbac74c266a5915fdbb3a24cb3 # solution 1
-
-# run
-# java -jar ~/protohackers/app/build/libs/app-all.jar &
 
