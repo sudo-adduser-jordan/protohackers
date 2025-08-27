@@ -12,7 +12,7 @@ import server.ServerLogFormatter;
 public class Server
 {
     private static final Logger logger = ServerLogFormatter.getLogger(Server.class);
-    private static final int MAX_THREADS = 69;
+    private static final int MAX_THREADS = 420;
     private static final int PORT = 42069;
 
     private final ExecutorService executorService;
@@ -51,7 +51,7 @@ public class Server
     private void initializeServerSocket(int port) throws IOException
     {
         serverSocket = new ServerSocket(port);
-        // serverSocket.setSoTimeout(42069);
+        serverSocket.setSoTimeout(42069);
         logger.info("Server connected to port: " + port);
         logger.info("Server timeout set: " + serverSocket.getSoTimeout());
     }
@@ -63,19 +63,13 @@ public class Server
             try // to accept socket connections
             {
                 Socket clientSocket = serverSocket.accept();
-                logger.info("JSON mapper created for client: " + clientSocket.getInetAddress());
-                executorService.execute(() -> handleClientSocket(clientSocket));
+                executorService.execute(() -> new ServerRunnable(clientSocket).run());
             }
             catch (IOException ex)
             {
                 logger.warning("Error accepting connection: " + ex.getMessage());
             }
         }
-    }
-
-    public void handleClientSocket(Socket clientSocket)
-    {
-        new ServerRunnable(clientSocket).run();
     }
 
     public void stopServer()

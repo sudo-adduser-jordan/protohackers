@@ -48,8 +48,8 @@ tasks.named<Test>("test") {
 
 tasks.register<JavaExec>("d0") {
     group = "application"
-    description = "Run server.d1.Server"
-    mainClass.set("server.d1.Server")
+    description = "Run server.d0.Server"
+    mainClass.set("server.d0.Server")
     classpath = sourceSets.main.get().runtimeClasspath
 }
 

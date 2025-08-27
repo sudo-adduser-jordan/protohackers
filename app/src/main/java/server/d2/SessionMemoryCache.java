@@ -21,9 +21,4 @@ public class SessionMemoryCache
 	{
 		return this.treeMap.get(timestamp);
 	}
-
-	public Map<Long, Integer> getAllData()
-	{
-		return this.treeMap;
-	}
 }

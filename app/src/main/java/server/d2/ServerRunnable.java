@@ -6,12 +6,9 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.logging.Logger;
-
-enum MessageTypes
-{
-    INSERT, QUERY
-}
 
 public class ServerRunnable implements Runnable
 {
@@ -29,7 +26,7 @@ public class ServerRunnable implements Runnable
 
     public void run()
     {
-        try // process client requests
+        try // to accept client connection
         {
             BufferedInputStream input = new BufferedInputStream(socket.getInputStream());
             BufferedOutputStream output = new BufferedOutputStream(socket.getOutputStream());
@@ -54,37 +51,39 @@ public class ServerRunnable implements Runnable
         {
             byte[] message = input.readNBytes(REQUEST_LENGTH);
             Request request = messageToRequest(message);
+            // System.out.println(request.getMessageType());
 
             switch (request.getMessageType())
             {
             case INSERT -> sessionMemoryCache.addPrice(request.getFirstValue(), request.getSecondValue());
-            case QUERY -> output.write(messageToResponse(sessionMemoryCache.getPrice(request.getFirstValue())));
+            case QUERY -> {
+                output.write(messageToResponse(sessionMemoryCache.getPrice(request.getFirstValue())));
+                output.flush();
             }
-
+            }
         }
         catch (Exception e)
         {
             socket.close();
+            logger.severe("Error processing request: " + e.toString());
             logger.severe("Client disconnected: " + socket.getInetAddress());
         }
 
     }
 
-    private static byte[] messageToResponse(int value)
+    // Hexadecimal: 00 00 13 f3
+    // Decoded: 5107 // intToBigEndianBytes
+    public static byte[] messageToResponse(Integer value)
     {
-        byte[] message = new byte[RESPONSE_LENGTH];
-
-        for (int i = 0; i < RESPONSE_LENGTH; i++)
-        {
-            message[i] = (byte) ((value >>> 8 * (3 - i)) & 0b11111111);
-        }
-
-        return message;
+        if (value == null) return ByteBuffer.allocate(RESPONSE_LENGTH).order(ByteOrder.BIG_ENDIAN).putInt(0).array();
+        return new byte[4];
     }
-
+    
+    // Byte: | 0 | 1 2 3 4 | 5 6 7 8 |
+    // Type: |char | int32 | int32 | // @Builder pattern
     private static Request messageToRequest(byte[] message)
     {
-        if (message.length != 9)
+        if (message.length != REQUEST_LENGTH)
         {
             throw new IllegalArgumentException("Message must be exactly 9 bytes");
         }
@@ -92,29 +91,27 @@ public class ServerRunnable implements Runnable
         Request.RequestBuilder builder = Request.builder();
 
         byte messageTypeByte = message[0];
+        System.out.println(messageTypeByte);
         switch (messageTypeByte)
         {
-        case INSERT_CHAR:
+            case INSERT_CHAR:
             builder.MessageType(MessageTypes.INSERT);
             break;
-        case QUERY_CHAR:
+            case QUERY_CHAR:
             builder.MessageType(MessageTypes.QUERY);
             break;
-        default:
+            default:
             logger.severe("Bad request.");
+            break;
         }
-
-        int firstValue = 0;
-        for (int i = 1; i <= 4; i++)
-        {
-            firstValue = (firstValue << 8) | (message[i] & 0xFF);
-        }
-
-        int secondValue = 0;
-        for (int i = 5; i <= 8; i++)
-        {
-            secondValue = (secondValue << 8) | (message[i] & 0xFF);
-        }
+        
+        int firstValue = ByteBuffer.wrap(message, 1, 4).order(ByteOrder.BIG_ENDIAN).getInt();
+        int secondValue = ByteBuffer.wrap(message, 5, 4).order(ByteOrder.BIG_ENDIAN).getInt();
+        
+        logger.info("" + (char) messageTypeByte);
+        logger.info(Integer.toString(firstValue));
+        logger.info(Integer.toString(secondValue));
+        
         return builder.FirstValue(firstValue).SecondValue(secondValue).build();
     }
 

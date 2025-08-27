@@ -28,7 +28,7 @@ class TestServer
         serverThread.start();
     }
 
-    @BeforeEach 
+    @BeforeEach
     public void setupConnections()
     {
         try // to connect to server with multiple clients
@@ -59,6 +59,50 @@ class TestServer
     @Test
     public void testQuery() throws IOException
     {
+    }
+
+    @Test
+    public void testQueryReturnsZero()
+    {
+        // Query with no prior insertions
+        // byte[] queryMsg = ClientMessageBuilder.createQueryMessage(0, 100);
+        // byte[] response = server.processMessage(queryMsg);
+        // int result = ClientMessageBuilder.decodeResponse(response);
+        // assertEquals(0, result);
+    }
+
+    @Test
+    public void testInvalidMessageLengthThrows()
+    {
+        // byte[] invalidMsg = new byte[5]; // too short
+        // try
+        // {
+        //     server.processMessage(invalidMsg);
+        //     fail("Should throw IllegalArgumentException");
+        // }
+        // catch (IllegalArgumentException e)
+        // {
+        //     // expected
+        // }
+    }
+
+    @Test
+    public void testInsertAndQuery_ReturnsExpectedAverage()
+    {
+        // Insert multiple data points
+        // server.processMessage(MessageBuilder.createInsertMessage(12345, 101));
+        // server.processMessage(MessageBuilder.createInsertMessage(12346, 102));
+        // server.processMessage(MessageBuilder.createInsertMessage(12347, 100));
+        // server.processMessage(MessageBuilder.createInsertMessage(40960, 5));
+
+        // Query between timestamps 12288 and 16384
+        // byte[] queryMsg = MessageBuilder.createQueryMessage(12288, 16384);
+        // byte[] response = server.processMessage(queryMsg);
+
+        // int average = MessageBuilder.decodeResponse(response);
+
+        // Expect the average of 101, 102, 100 within that range: (101+102+100)/3 = 101
+        // assertEquals(101, average);
     }
 
     @AfterAll
