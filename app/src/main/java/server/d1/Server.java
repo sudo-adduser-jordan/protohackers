@@ -12,7 +12,7 @@ import server.ServerLogFormatter;
 public class Server
 {
     private static final Logger logger = ServerLogFormatter.getLogger(Server.class);
-    private static final int MAX_THREADS = 5;
+    private static final int MAX_THREADS = 10000;
     private static final int PORT = 42069;
 
     private final ExecutorService executorService;

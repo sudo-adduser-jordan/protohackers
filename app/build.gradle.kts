@@ -28,10 +28,17 @@ tasks.named<Test>("test") {
     }
     testLogging {
         events("PASSED", "FAILED", "SKIPPED")
-        // exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
         showStandardStreams = true
     }
 }
+
+// tasks.named<Run>("run") {
+// gradle d0 
+// gradle d1 
+// gradle d2 
+// gradle run should do something
+// }
 
 tasks.register<JavaExec>("d0") {
     group = "application"

@@ -27,7 +27,6 @@ public static void setup() {
     serverThread.start();
 }
 
-
 @Test
 public void testSocketConnection() 
 {

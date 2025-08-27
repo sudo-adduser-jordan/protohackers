@@ -1,11 +1,12 @@
 package server.d1;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.util.Objects;
@@ -27,10 +28,10 @@ public class ServerRunnable implements Runnable
     {
         this.socket = socket;
         this.jsonMapper = JsonMapper.builder()
-            .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
-            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-            .disable(MapperFeature.ALLOW_COERCION_OF_SCALARS)
-            .build();
+                .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .disable(MapperFeature.ALLOW_COERCION_OF_SCALARS)
+                .build();
     };
 
     public void run()
@@ -41,23 +42,23 @@ public class ServerRunnable implements Runnable
             OutputStream outputStream = socket.getOutputStream();
 
             BufferedReader input = new BufferedReader(new InputStreamReader(inputStream));
-            BufferedOutputStream output = new BufferedOutputStream(outputStream);
+            BufferedWriter output = new BufferedWriter(new OutputStreamWriter(outputStream));
 
             while (!socket.isClosed())
             { // accept requests
 
-                String response = input.readLine();
-                if (response == null)
+                String request = input.readLine();
+                if (request == null)
                 {
                     logger.warning("Request: " + null);
                     logger.severe("Client disconnected: " + socket.getInetAddress());
                     socket.close();
                 }
-                logger.warning("Request: " + response);
+                logger.warning("Request: " + request);
 
                 try // to process request
                 {
-                    RequestJSON requestJSON = jsonMapper.readValue(response, RequestJSON.class);
+                    RequestJSON requestJSON = jsonMapper.readValue(request, RequestJSON.class);
                     if (!Objects.equals(requestJSON.getMethod(), "isPrime"))
                     {
                         throw new Exception("method does not equal 'isPrime'");
@@ -66,19 +67,26 @@ public class ServerRunnable implements Runnable
                     boolean isPrime = isPrimeDouble(requestJSON.getNumber());
 
                     ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrime);
-                    logger.warning("Response: " + jsonMapper.writeValueAsString(responseJSON));
 
-                    output.write((jsonMapper.writeValueAsString(responseJSON) + "\n").getBytes());
+                    output.write(jsonMapper.writeValueAsString(responseJSON));
+                    output.newLine();
                     output.flush();
+
+                    logger.warning("Response: " + jsonMapper.writeValueAsString(responseJSON));
 
                 }
                 catch (Exception e)
                 {
                     logger.warning("Invalid JSON: " + e.toString());
-                    logger.warning("Response: " + response);
+                    logger.warning("Response: " + request);
 
-                    if (response != null)
-                        output.write((response + "\n").getBytes());
+                    if (request != null)
+                    {
+
+                        output.write(request);
+                        output.newLine();
+                        output.flush();
+                    }
 
                     socket.close();
                     logger.severe("Client disconnected: " + socket.getInetAddress());
