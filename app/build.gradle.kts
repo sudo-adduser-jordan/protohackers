@@ -33,11 +33,17 @@ tasks.named<Test>("test") {
     }
 }
 
-// tasks.named<Run>("run") {
-// gradle d0 
-// gradle d1 
-// gradle d2 
-// gradle run should do something
+// tasks.named<Test>("test d1") {
+//     useJUnitPlatform()
+//     reports {
+//         junitXml.required = false
+//         html.required = false
+//     }
+//     testLogging {
+//         events("PASSED", "FAILED", "SKIPPED")
+//         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+//         showStandardStreams = true
+//     }
 // }
 
 tasks.register<JavaExec>("d0") {
