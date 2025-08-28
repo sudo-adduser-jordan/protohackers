@@ -23,7 +23,7 @@ public class SessionMemoryCache
 	}
 
 	// mintime <= T <= maxtime
-	public Double getAveragePriceInRange(int mintime, int maxtime)
+	public Integer getAveragePriceInRange(int mintime, int maxtime)
 	{
 		if (maxtime < mintime) return null;
 
@@ -45,6 +45,6 @@ public class SessionMemoryCache
 		} 
 		if (count == 0) return null;
 
-		return (double) sum / count;
+		return  sum / count;
 	}
 }

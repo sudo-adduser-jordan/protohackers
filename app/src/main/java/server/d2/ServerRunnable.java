@@ -62,7 +62,7 @@ public class ServerRunnable implements Runnable
             {
             case INSERT -> sessionMemoryCache.addPrice(request.getFirstValue(), request.getSecondValue());
             case QUERY -> {
-                output.write(messageToResponse(sessionMemoryCache.getPrice(request.getFirstValue())));
+                output.write(messageToResponse(sessionMemoryCache.getAveragePriceInRange(request.getFirstValue(), request.getSecondValue())));
                 output.flush();
             }
             }
