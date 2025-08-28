@@ -82,9 +82,6 @@ tasks.register<Test>("test2") {
     }
 }
 
-
-
-
 tasks.register<JavaExec>("d0") {
     group = "application"
     description = "Run server.d0.Server"
