@@ -25,19 +25,18 @@ public class SessionMemoryCache
 	}
 
 	// mintime <= T <= maxtime
-	    public Integer getAveragePriceInRange(int minTimestamp, int maxTimestamp) {
-        Set<Integer> validTimestamps = treeMap.keySet().stream()
-                .filter(t -> minTimestamp <= t && t <= maxTimestamp)
-                .collect(Collectors.toSet());
+	public Integer getAveragePriceInRange(int minTimestamp, int maxTimestamp)
+	{
+		Set<Integer> validTimestamps = treeMap
+					.keySet()
+					.stream()
+					.filter(t -> minTimestamp <= t && t <= maxTimestamp)
+					.collect(Collectors.toSet());
 
-        if (validTimestamps.isEmpty()) {
-            return 0;
-        }
+		if (validTimestamps.isEmpty()) return 0;
 
-        long sum = validTimestamps.stream()
-                .mapToLong(treeMap::get)
-                .sum();
+		long sum = validTimestamps.stream().mapToLong(treeMap::get).sum();
 
-        return (int) (sum / validTimestamps.size());
-    }
+		return (int) (sum / validTimestamps.size());
+	}
 }

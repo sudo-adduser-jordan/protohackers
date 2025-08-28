@@ -78,6 +78,7 @@ public class Server
     public void stopServer()
     {
         executorService.shutdown();
+        logger.warning("Server shutdown.");
     }
 
 }

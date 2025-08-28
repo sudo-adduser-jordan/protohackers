@@ -53,7 +53,7 @@ public class ServerRunnable implements Runnable
         try // to process request
         {
             byte[] message = input.readNBytes(REQUEST_LENGTH);
-            // if (message.length != REQUEST_LENGTH) {
+
             if (message.length == 0) throw new IllegalArgumentException("Message is empty.");
             if (message.length != REQUEST_LENGTH) throw new IllegalArgumentException("Message must be exactly 9 bytes");
 
@@ -62,13 +62,11 @@ public class ServerRunnable implements Runnable
             {
             case INSERT -> sessionMemoryCache.addPrice(request.getFirstValue(), request.getSecondValue());
             case QUERY -> {
-                output.write(messageToResponse(sessionMemoryCache.getAveragePriceInRange(request.getFirstValue(), request.getSecondValue())));
+                output.write(messageToResponse(
+                        sessionMemoryCache.getAveragePriceInRange(request.getFirstValue(), request.getSecondValue())));
                 output.flush();
             }
             }
-            // } else{
-            // log.debug("throw away bad request length");
-            // }
         }
         catch (Exception e)
         {
@@ -88,20 +86,7 @@ public class ServerRunnable implements Runnable
             buffer.putInt(0);
         else
             buffer.putInt(value);
-        byte[] message = buffer.array();
-        logger.debug(bytesToHex(message));
-        return message;
-    }
-
-    // Method to convert byte array to hex string for logging
-    public static String bytesToHex(byte[] bytes)
-    {
-        StringBuilder hexString = new StringBuilder();
-        for (byte b : bytes)
-        {
-            hexString.append(String.format("%02X", b));
-        }
-        return hexString.toString().trim();
+        return buffer.array();
     }
 
     // Byte: | 0 | 1 2 3 4 | 5 6 7 8 |
@@ -127,7 +112,6 @@ public class ServerRunnable implements Runnable
         int firstValue = ByteBuffer.wrap(message, 1, 4).order(ByteOrder.BIG_ENDIAN).getInt();
         int secondValue = ByteBuffer.wrap(message, 5, 4).order(ByteOrder.BIG_ENDIAN).getInt();
 
-        // System.out.println(messageTypeByte);
         logger.info("Request message: " + (char) messageTypeByte + " " + firstValue + "\t" + secondValue);
 
         return builder.FirstValue(firstValue).SecondValue(secondValue).build();
