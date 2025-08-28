@@ -53,15 +53,18 @@ public class ServerRunnable implements Runnable
         try // to process request
         {
             byte[] message = input.readNBytes(REQUEST_LENGTH);
-            Request request = messageToRequest(message);
-
-            switch (request.getMessageType())
-            {
-            case INSERT -> sessionMemoryCache.addPrice(request.getFirstValue(), request.getSecondValue());
-            case QUERY -> {
-                output.write(messageToResponse(sessionMemoryCache.getPrice(request.getFirstValue())));
-                output.flush();
-            }
+            if (message.length != REQUEST_LENGTH) {
+                Request request = messageToRequest(message);
+                switch (request.getMessageType())
+                {
+                    case INSERT -> sessionMemoryCache.addPrice(request.getFirstValue(), request.getSecondValue());
+                    case QUERY -> {
+                        output.write(messageToResponse(sessionMemoryCache.getPrice(request.getFirstValue())));
+                        output.flush();
+                    }
+                }
+            } else{
+                logger.debug("throw away bad request length");
             }
         }
         catch (Exception e)
@@ -93,7 +96,7 @@ public class ServerRunnable implements Runnable
         StringBuilder hexString = new StringBuilder();
         for (byte b : bytes)
         {
-            hexString.append(String.format("%02X ", b));
+            hexString.append(String.format("%02X", b));
         }
         return hexString.toString().trim();
     }
@@ -102,8 +105,6 @@ public class ServerRunnable implements Runnable
     // Type: |char | int32 | int32 | // @Builder pattern
     private static Request messageToRequest(byte[] message)
     {
-        if (message.length != REQUEST_LENGTH) throw new IllegalArgumentException("Message must be exactly 9 bytes");
-
         Request.RequestBuilder builder = Request.builder();
 
         byte messageTypeByte = message[0];
