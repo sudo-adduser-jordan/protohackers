@@ -2,7 +2,6 @@ package server.d1;
 
 public class JSONRequests
 {
-
         // Valid JSON string
         public static final String validJSON = """
                         {"method": "isPrime", "number": 123}""";
