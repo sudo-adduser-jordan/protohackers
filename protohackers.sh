@@ -13,8 +13,9 @@ ufw allow 42069/tcp
 
 # java
 curl -s "https://get.sdkman.io" | bash
-source "$HOME/.sdkman/bin/sdkman-init.sh"
-sdk install java 24.0.2-graalce
+# source "$HOME/.sdkman/bin/sdkman-init.sh"
+source "/root/.sdkman/bin/sdkman-init.sh"
+sdk install java 21.0.2-graalce
 sdk install gradle 9.0.0
 
 # build

@@ -1,6 +1,7 @@
 package server.d2;
 
 import server.ServerLogFormatter;
+import server.ServerLogOptions;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -12,7 +13,9 @@ import java.util.logging.Logger;
 
 public class ServerRunnable implements Runnable
 {
-    private static final Logger logger = ServerLogFormatter.getLogger(Server.class);
+    private static final Logger log = ServerLogFormatter.getLogger(Server.class);
+    private static final ServerLogOptions logger = new ServerLogOptions(log);
+
     private static final int REQUEST_LENGTH = 9;
     private static final int RESPONSE_LENGTH = 4;
     private static final char INSERT_CHAR = 'I';
@@ -51,7 +54,6 @@ public class ServerRunnable implements Runnable
         {
             byte[] message = input.readNBytes(REQUEST_LENGTH);
             Request request = messageToRequest(message);
-            // System.out.println(request.getMessageType());
 
             switch (request.getMessageType())
             {
@@ -65,8 +67,8 @@ public class ServerRunnable implements Runnable
         catch (Exception e)
         {
             socket.close();
-            logger.severe("Error processing request: " + e.toString());
-            logger.severe("Client disconnected: " + socket.getInetAddress());
+            logger.error("Error processing request: " + e.toString());
+            logger.error("Client disconnected: " + socket.getInetAddress());
         }
 
     }
@@ -75,43 +77,46 @@ public class ServerRunnable implements Runnable
     // Decoded: 5107 // intToBigEndianBytes
     public static byte[] messageToResponse(Integer value)
     {
-        if (value == null) return ByteBuffer.allocate(RESPONSE_LENGTH).order(ByteOrder.BIG_ENDIAN).putInt(0).array();
-        return ByteBuffer.allocate(RESPONSE_LENGTH).order(ByteOrder.BIG_ENDIAN).putInt(value).array();
+        byte[] message = new byte[4];
+        logger.info("Response value: " + value);
+
+        if (value == null)
+            message = ByteBuffer.allocate(RESPONSE_LENGTH).order(ByteOrder.BIG_ENDIAN).putInt(0).array();
+        else
+            message = ByteBuffer.allocate(RESPONSE_LENGTH).order(ByteOrder.BIG_ENDIAN).putInt(value).array();
+
+        logger.info("Response message: " + message);
+        return message;
     }
-    
+
     // Byte: | 0 | 1 2 3 4 | 5 6 7 8 |
     // Type: |char | int32 | int32 | // @Builder pattern
     private static Request messageToRequest(byte[] message)
     {
-        if (message.length != REQUEST_LENGTH)
-        {
-            throw new IllegalArgumentException("Message must be exactly 9 bytes");
-        }
+        if (message.length != REQUEST_LENGTH) throw new IllegalArgumentException("Message must be exactly 9 bytes");
 
         Request.RequestBuilder builder = Request.builder();
 
         byte messageTypeByte = message[0];
-        System.out.println(messageTypeByte);
         switch (messageTypeByte)
         {
-            case INSERT_CHAR:
+        case INSERT_CHAR:
             builder.MessageType(MessageTypes.INSERT);
             break;
-            case QUERY_CHAR:
+        case QUERY_CHAR:
             builder.MessageType(MessageTypes.QUERY);
             break;
-            default:
-            logger.severe("Bad request.");
+        default:
+            logger.error("Bad request.");
             break;
         }
-        
+
         int firstValue = ByteBuffer.wrap(message, 1, 4).order(ByteOrder.BIG_ENDIAN).getInt();
         int secondValue = ByteBuffer.wrap(message, 5, 4).order(ByteOrder.BIG_ENDIAN).getInt();
-        
-        logger.info("" + (char) messageTypeByte);
-        logger.info(Integer.toString(firstValue));
-        logger.info(Integer.toString(secondValue));
-        
+
+        // System.out.println(messageTypeByte);
+        logger.info("Request message: " + (char) messageTypeByte + " " + firstValue + "\t" + secondValue);
+
         return builder.FirstValue(firstValue).SecondValue(secondValue).build();
     }
 

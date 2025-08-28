@@ -8,10 +8,13 @@ import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 import server.ServerLogFormatter;
+import server.ServerLogOptions;
 
 public class Server
 {
-    private static final Logger logger = ServerLogFormatter.getLogger(Server.class);
+    private static final Logger log = ServerLogFormatter.getLogger(Server.class);
+    private static final ServerLogOptions logger = new ServerLogOptions(log);
+    
     private static final int MAX_THREADS = 420;
     private static final int PORT = 42069;
 
