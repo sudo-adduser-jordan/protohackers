@@ -33,6 +33,9 @@ public class SessionMemoryCache
 		for (Map.Entry<Integer, Integer> entry : this.treeMap.entrySet())
 		{
 			int timestamp = entry.getKey();
+			
+			System.out.println(timestamp + ", " + entry.getKey());
+
 			if (mintime <= timestamp && timestamp <= maxtime)
 			{
 				sum += entry.getValue();
