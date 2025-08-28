@@ -20,7 +20,7 @@ dependencies {
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 application.mainClass = "server.Server"
 
-tasks.named<Test>("test") {
+tasks.named<Test>("test") { // all
     useJUnitPlatform()
     reports {
         junitXml.required = false
@@ -33,18 +33,57 @@ tasks.named<Test>("test") {
     }
 }
 
-// tasks.named<Test>("test d1") {
-//     useJUnitPlatform()
-//     reports {
-//         junitXml.required = false
-//         html.required = false
-//     }
-//     testLogging {
-//         events("PASSED", "FAILED", "SKIPPED")
-//         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-//         showStandardStreams = true
-//     }
-// }
+tasks.register<Test>("test0") {
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    include("server/d0/*")
+    reports {
+        junitXml.required.set(false)
+        html.required.set(false)
+    }
+    testLogging {
+        events("PASSED", "FAILED", "SKIPPED")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showStandardStreams = true
+    }
+}
+
+
+tasks.register<Test>("test1") {
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    include("server/d1/*")
+    reports {
+        junitXml.required.set(false)
+        html.required.set(false)
+    }
+    testLogging {
+        events("PASSED", "FAILED", "SKIPPED")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showStandardStreams = true
+    }
+}
+
+tasks.register<Test>("test2") {
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    include("server/d2/*")
+    reports {
+        junitXml.required.set(false)
+        html.required.set(false)
+    }
+    testLogging {
+        events("PASSED", "FAILED", "SKIPPED")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showStandardStreams = true
+    }
+}
+
+
+
 
 tasks.register<JavaExec>("d0") {
     group = "application"

@@ -63,7 +63,6 @@ public class Server
             try // try to accept socket connections
             {
                 Socket clientSocket = serverSocket.accept();
-                logger.info("JSON mapper created for client: " + clientSocket.getInetAddress());
                 executorService.execute(() -> handleClientSocket(clientSocket));
             }
             catch (IOException ex)
