@@ -53,19 +53,22 @@ public class ServerRunnable implements Runnable
         try // to process request
         {
             byte[] message = input.readNBytes(REQUEST_LENGTH);
-            if (message.length != REQUEST_LENGTH) {
-                Request request = messageToRequest(message);
-                switch (request.getMessageType())
-                {
-                    case INSERT -> sessionMemoryCache.addPrice(request.getFirstValue(), request.getSecondValue());
-                    case QUERY -> {
-                        output.write(messageToResponse(sessionMemoryCache.getPrice(request.getFirstValue())));
-                        output.flush();
-                    }
-                }
-            } else{
-                logger.debug("throw away bad request length");
+            // if (message.length != REQUEST_LENGTH) {
+
+            if (message.length != REQUEST_LENGTH) throw new IllegalArgumentException("Message must be exactly 9 bytes");
+
+            Request request = messageToRequest(message);
+            switch (request.getMessageType())
+            {
+            case INSERT -> sessionMemoryCache.addPrice(request.getFirstValue(), request.getSecondValue());
+            case QUERY -> {
+                output.write(messageToResponse(sessionMemoryCache.getPrice(request.getFirstValue())));
+                output.flush();
             }
+            }
+            // } else{
+            // log.debug("throw away bad request length");
+            // }
         }
         catch (Exception e)
         {
