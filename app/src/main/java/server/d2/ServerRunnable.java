@@ -54,7 +54,7 @@ public class ServerRunnable implements Runnable
         {
             byte[] message = input.readNBytes(REQUEST_LENGTH);
             // if (message.length != REQUEST_LENGTH) {
-
+            logger.debug(bytesToHex(message));
             if (message.length != REQUEST_LENGTH) throw new IllegalArgumentException("Message must be exactly 9 bytes");
 
             Request request = messageToRequest(message);
