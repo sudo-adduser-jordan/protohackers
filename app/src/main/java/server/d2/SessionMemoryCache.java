@@ -1,7 +1,9 @@
 package server.d2;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 public class SessionMemoryCache
 {
@@ -23,28 +25,19 @@ public class SessionMemoryCache
 	}
 
 	// mintime <= T <= maxtime
-	public Integer getAveragePriceInRange(int mintime, int maxtime)
-	{
-		if (maxtime < mintime) return null;
+	    public Integer getAveragePriceInRange(int minTimestamp, int maxTimestamp) {
+        Set<Integer> validTimestamps = treeMap.keySet().stream()
+                .filter(t -> minTimestamp <= t && t <= maxTimestamp)
+                .collect(Collectors.toSet());
 
-		int sum = 0;
-		int count = 0;
+        if (validTimestamps.isEmpty()) {
+            return 0;
+        }
 
-		for (Map.Entry<Integer, Integer> entry : this.treeMap.entrySet())
-		{
-			int timestamp = entry.getKey();
-			
-			System.out.println(timestamp + ", " + entry.getKey());
+        long sum = validTimestamps.stream()
+                .mapToLong(treeMap::get)
+                .sum();
 
-			if (mintime <= timestamp && timestamp <= maxtime)
-			{
-				sum += entry.getValue();
-				count++;
-			}
-			if (timestamp > maxtime) break;
-		} 
-		if (count == 0) return null;
-
-		return  sum / count;
-	}
+        return (int) (sum / validTimestamps.size());
+    }
 }
