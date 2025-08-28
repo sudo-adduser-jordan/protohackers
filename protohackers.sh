@@ -8,6 +8,10 @@ apt install -y zip
 apt install -y unzip
 apt install -y curl 
 
+# test sdkman fail wit this
+apt update 
+apt upgrade -y 
+
 # open port
 ufw allow 42069/tcp
 

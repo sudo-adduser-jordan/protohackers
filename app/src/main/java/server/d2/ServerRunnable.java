@@ -77,16 +77,25 @@ public class ServerRunnable implements Runnable
     // Decoded: 5107 // intToBigEndianBytes
     public static byte[] messageToResponse(Integer value)
     {
-        byte[] message = new byte[4];
-        logger.info("Response value: " + value);
-
+        ByteBuffer buffer = ByteBuffer.allocate(RESPONSE_LENGTH).order(ByteOrder.BIG_ENDIAN);
         if (value == null)
-            message = ByteBuffer.allocate(RESPONSE_LENGTH).order(ByteOrder.BIG_ENDIAN).putInt(0).array();
+            buffer.putInt(0);
         else
-            message = ByteBuffer.allocate(RESPONSE_LENGTH).order(ByteOrder.BIG_ENDIAN).putInt(value).array();
-
-        logger.info("Response message: " + message);
+            buffer.putInt(value);
+        byte[] message = buffer.array();
+        logger.debug(bytesToHex(message));
         return message;
+    }
+
+    // Method to convert byte array to hex string for logging
+    public static String bytesToHex(byte[] bytes)
+    {
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : bytes)
+        {
+            hexString.append(String.format("%02X ", b));
+        }
+        return hexString.toString().trim();
     }
 
     // Byte: | 0 | 1 2 3 4 | 5 6 7 8 |
