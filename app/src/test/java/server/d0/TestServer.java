@@ -1,112 +1,78 @@
 package server.d0;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.util.Arrays;
-
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.RepeatedTest;
 
-class TestServer
-{
-    static int TEST_PORT = 6969;
-    static Server server;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+import java.util.Random;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class TestServer {
+
+    private static Thread serverThread;
+    private static final int REQUESTS_PER_CLIENT = 10;
+    private static final int CLIENT_COUNT = 5;
+
+    private String randomString(Random random, int length) {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
+    }
+
 
     @BeforeAll
-    public static void setup()
-    {
-        server = new Server();
-        Thread serverThread = new Thread(() -> server.startServer(TEST_PORT));
+    public static void startServer() {
+        serverThread = new Thread(() -> {
+            try {
+                new Server().startServer(Server.PORT);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
         serverThread.start();
     }
 
-    @Test
-    public void testSocketConnection()
-    {
-        try (Socket socket = new Socket("localhost", TEST_PORT))
-        {
-            assertTrue(socket.isConnected());
-            socket.close();
-        }
-        catch (IOException e)
-        {
-            fail("Failed to connect to server: " + e.getMessage());
+    @AfterAll
+    public static void stopServer() {
+        Server.isRunning = false;
+        serverThread.interrupt();
+        try {
+            serverThread.join(2000);
+        } catch (InterruptedException ignored) {
         }
     }
 
-    @Test
-    public void testSocketConnections()
-    {
-        try (Socket socket0 = new Socket("localhost", TEST_PORT);
-                Socket socket1 = new Socket("localhost", TEST_PORT);
-                Socket socket2 = new Socket("localhost", TEST_PORT);
-                Socket socket3 = new Socket("localhost", TEST_PORT);
-                Socket socket4 = new Socket("localhost", TEST_PORT);)
-        {
-            assertTrue(socket0.isConnected());
-            assertTrue(socket1.isConnected());
-            assertTrue(socket2.isConnected());
-            assertTrue(socket3.isConnected());
-            assertTrue(socket4.isConnected());
+    @RepeatedTest(CLIENT_COUNT)
+    public void testSingleClientMultipleRequests() throws IOException {
+        try (SocketChannel client = SocketChannel.open()) {
+            client.connect(new InetSocketAddress("localhost", Server.PORT));
+            client.configureBlocking(true);
+            Random random = new Random();
 
-            socket0.close();
-            socket1.close();
-            socket2.close();
-            socket3.close();
-            socket4.close();
-        }
-        catch (IOException e)
-        {
-            fail("Failed to connect to server: " + e.getMessage());
-        }
-    }
+            for (int i = 0; i < REQUESTS_PER_CLIENT; i++) {
+                String message = randomString(random, 16);
+                ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
+                client.write(buffer);
 
-    @Test
-    public void testEchoRequests() throws IOException
-    {
-        try (Socket socket0 = new Socket("localhost", TEST_PORT);
-                Socket socket1 = new Socket("localhost", TEST_PORT);
-                Socket socket2 = new Socket("localhost", TEST_PORT);
-                Socket socket3 = new Socket("localhost", TEST_PORT);
-                Socket socket4 = new Socket("localhost", TEST_PORT);)
-        {
-            String request = "message echo bytes";
-            Socket[] sockets =
-            { socket0, socket1, socket2, socket3, socket4 };
+                ByteBuffer readBuffer = ByteBuffer.allocate(1024);
+                int bytesRead = client.read(readBuffer);
+                readBuffer.flip();
 
-            for (Socket socket : sockets)
-            {
-                InputStream inputStream = socket.getInputStream();
-                OutputStream outputStream = socket.getOutputStream();
-                ByteArrayOutputStream response = new ByteArrayOutputStream();
+                byte[] bytes = new byte[bytesRead];
+                readBuffer.get(bytes);
+                String response = new String(bytes);
 
-                outputStream.write(request.getBytes());
-                socket.shutdownOutput();
-
-                int readBytes;
-                byte[] buffer = new byte[1024];
-                while ((readBytes = inputStream.read(buffer)) != -1)
-                {
-                    response.write(buffer, 0, readBytes);
-                }
-
-                assertEquals(request, response.toString(), "Reponse mismatched for socket: " + socket);
-                socket.close();
+                assertTrue(response.equals(message), "Response did not match request");
             }
         }
-    }
-
-    @AfterAll
-    static void tearDown()
-    {
-        server.stopServer();
     }
 
 }

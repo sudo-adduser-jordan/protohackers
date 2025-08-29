@@ -47,7 +47,7 @@ public class ServerRunnable implements Runnable
         }
     }
 
-    private void processRequest(BufferedInputStream input, BufferedOutputStream output,
+    public void processRequest(BufferedInputStream input, BufferedOutputStream output,
             SessionMemoryCache sessionMemoryCache) throws IOException
     {
         try // to process request
@@ -79,7 +79,7 @@ public class ServerRunnable implements Runnable
 
     // Hexadecimal: 00 00 13 f3
     // Decoded: 5107 // intToBigEndianBytes
-    public static byte[] messageToResponse(Integer value)
+    private static byte[] messageToResponse(Integer value)
     {
         ByteBuffer buffer = ByteBuffer.allocate(RESPONSE_LENGTH).order(ByteOrder.BIG_ENDIAN);
         if (value == null)

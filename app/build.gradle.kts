@@ -1,4 +1,3 @@
-
 plugins {
     java
     application
@@ -10,12 +9,20 @@ repositories {
     mavenCentral()
 }
 
+ val mockitoAgent = configurations.create("mockitoAgent")
 dependencies {
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    testImplementation("org.mockito:mockito-core:5.19.0")
+    // testImplementation("org.mockito:mockito-inline:5.2.0")
+     testImplementation("org.mockito:mockito-core:5.19.0")
+     mockitoAgent("org.mockito:mockito-core:5.19.0") { isTransitive = false }
+    
     implementation(libs.guava)
     implementation("com.fasterxml.jackson.core:jackson-databind:2.19.2")
-}
+    // https://mvnrepository.com/artifact/org.mockito/mockito-core
+ }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 application.mainClass = "server.Server"
@@ -34,6 +41,9 @@ tasks.named<Test>("test") { // all
 }
 
 tasks.register<Test>("test0") {
+    jvmArgs = listOf("-javaagent:${mockitoAgent.asPath}")
+        // jvmArgs.add("-javaagent:${mockitoAgent.asPath}")
+
     useJUnitPlatform()
     testClassesDirs = sourceSets.test.get().output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
