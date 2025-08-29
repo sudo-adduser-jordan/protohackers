@@ -16,8 +16,8 @@ import server.ServerLogFormatter;
 public class Server
 {
     private static final Logger logger = ServerLogFormatter.getLogger(Server.class);
-    public static final int PORT = 42069;
     volatile static boolean isRunning = true;
+    public static final int PORT = 42069;
 
     public static void main(String[] args) throws IOException
     {
@@ -68,7 +68,7 @@ public class Server
     {
         ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
         serverSocketChannel.configureBlocking(false);
-        serverSocketChannel.socket().bind(new InetSocketAddress(PORT));
+        serverSocketChannel.socket().bind(new InetSocketAddress(port));
         serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 
         logger.info("Server SocketChannel created for provider: " + selector.provider());
@@ -133,7 +133,7 @@ public class Server
 
         buffer.flip();
         String message = new String(buffer.array(), 0, buffer.limit());
-        logger.info("Request:\t" + message);
+        logger.info("Request: \t" + message);
 
         writeChannel(clientSocketChannel, message);
         buffer.clear();

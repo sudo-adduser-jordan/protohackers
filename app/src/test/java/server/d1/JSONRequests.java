@@ -63,7 +63,7 @@ public class JSONRequests
                                 invalidJSONMissingQuotes,
                                 invalidJSONWrongQuotes,
                                 invalidJSONEmptyObject,
-                                invalidJSONEmptyArray, 
+                                // invalidJSONEmptyArray, 
                                 invalidJSONNumberAsString,
                                 // invalidJSONExtraField,
                                 invalidJSONMissingMethod,

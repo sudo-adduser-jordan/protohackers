@@ -17,6 +17,7 @@ public class TestServer {
     private static Thread serverThread;
     private static final int REQUESTS_PER_CLIENT = 10;
     private static final int CLIENT_COUNT = 5;
+    private static final int TEST_PORT = 6969;
 
     private String randomString(Random random, int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -32,7 +33,7 @@ public class TestServer {
     public static void startServer() {
         serverThread = new Thread(() -> {
             try {
-                new Server().startServer(Server.PORT);
+                new Server().startServer(TEST_PORT);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -53,7 +54,7 @@ public class TestServer {
     @RepeatedTest(CLIENT_COUNT)
     public void testEchoRequests() throws IOException {
         try (SocketChannel client = SocketChannel.open()) {
-            client.connect(new InetSocketAddress("localhost", Server.PORT));
+            client.connect(new InetSocketAddress("localhost", TEST_PORT));
             client.configureBlocking(true);
             Random random = new Random();
 

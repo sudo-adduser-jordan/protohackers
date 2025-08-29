@@ -1,90 +1,126 @@
-// package server.d2;
+package server.d2;
 
-// import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.RepeatedTest;
 
-// import java.io.IOException;
-// import org.junit.jupiter.api.AfterAll;
-// import org.junit.jupiter.api.BeforeAll;
-// import org.junit.jupiter.api.BeforeEach;
-// import org.junit.jupiter.api.Test;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+import java.util.Random;
 
-// class TestServer
-// {
-//     private final static int TEST_PORT = 6968;
-//     private static Server server;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertLinesMatch;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-//     @BeforeAll
-//     public static void setup()
-//     {
-//         server = new Server();
-//         Thread serverThread = new Thread(() -> server.startServer(TEST_PORT));
-//         serverThread.start();
-//     }
+public class TestServer
+{
 
-//     @BeforeEach
-//     public void setupConnections()
-//     {
-//     }
+    private static Thread serverThread;
+    private static final int REQUESTS_PER_CLIENT = 10;
+    private static final int CLIENT_COUNT = 5;
+    private static final int TEST_PORT = 6967;
 
-//     @Test
-//     public void testInsert() throws IOException
-//     {
-//     }
+    private String randomString(Random random, int length)
+    {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++)
+        {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
+    }
 
-//     @Test
-//     public void testQuery() throws IOException
-//     {
-//     }
+    @BeforeAll
+    public static void startServer() throws InterruptedException
+    {
+        serverThread = new Thread(() ->
+        {
+            try
+            {
+                new Server().startServer(TEST_PORT);
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+        });
+        serverThread.start();
+        serverThread.sleep(500);
+    }
 
-//     @Test
-//     public void testQueryReturnsZero()
-//     {
+    @AfterAll
+    public static void stopServer()
+    {
+        Server.isRunning = false;
+        serverThread.interrupt();
+        try
+        {
+            serverThread.join(2000);
+        }
+        catch (InterruptedException ignored)
+        {
+        }
+    }
 
+    @RepeatedTest(CLIENT_COUNT)
+    public void testInsertRequests() throws IOException
+    {
+        try (SocketChannel client = SocketChannel.open())
+        {
+            client.connect(new InetSocketAddress("localhost", TEST_PORT));
+            client.configureBlocking(true);
 
-//         // Query with no prior insertions
-//         byte[] message = MessageBuilder.createQueryMessage(0, 100);
-//         byte[] response = serverRunnable.processRequest(message);
-//         int result = MessageBuilder.decodeResponse(response);
-//         assertEquals(0, result);
-//     }
+            for (int i = 1; i < REQUESTS_PER_CLIENT + 1; i++)
+            {
 
-//     @Test
-//     public void testInvalidMessageLengthThrows()
-//     {
-//         // byte[] invalidMsg = new byte[5]; // too short
-//         // try
-//         // {
-//         // server.processMessage(invalidMsg);
-//         // fail("Should throw IllegalArgumentException");
-//         // }
-//         // catch (IllegalArgumentException e)
-//         // {
-//         // // expected
-//         // }
-//     }
+                byte[] request = MessageBuilder.createInsertMessage(i, i * 4);
+                ByteBuffer buffer = ByteBuffer.wrap(request);
+                client.write(buffer);
 
-//     @Test
-//     public void testInsertAndQuery_ReturnsExpectedAverage()
-//     {
-//         // Insert multiple data points
-//         // server.processMessage(MessageBuilder.createInsertMessage(12345, 101));
-//         // server.processMessage(MessageBuilder.createInsertMessage(12346, 102));
-//         // server.processMessage(MessageBuilder.createInsertMessage(12347, 100));
-//         // server.processMessage(MessageBuilder.createInsertMessage(40960, 5));
+                ByteBuffer readBuffer = ByteBuffer.allocate(1024);
+                int bytesRead = client.read(readBuffer);
+                readBuffer.flip();
+                // fail("Response is null", bytesRead == 0);
 
-//         // Query between timestamps 12288 and 16384
-//         // byte[] queryMsg = MessageBuilder.createQueryMessage(12288, 16384);
-//         // byte[] response = server.processMessage(queryMsg);
+                byte[] response = new byte[bytesRead];
+                readBuffer.get(response);
+                // String response = new String(response);
 
-//         // int average = MessageBuilder.decodeResponse(response);
+                byte[] expected =
+                { 0, 0, 0, 73 };
 
-//         // Expect the average of 101, 102, 100 within that range: (101+102+100)/3 = 101
-//         // assertEquals(101, average);
-//     }
+                assertArrayEquals(response, expected);
+            }
+        }
+    }
 
-//     @AfterAll
-//     static void tearDown()
-//     {
-//         server.stopServer();
-//     }
-// }
+    // @RepeatedTest(CLIENT_COUNT)
+    // public void testQueryRequests() throws IOException {
+    // try (SocketChannel client = SocketChannel.open()) {
+    // client.connect(new InetSocketAddress("localhost", TEST_PORT));
+    // client.configureBlocking(true);
+    // Random random = new Random();
+
+    // for (int i = 0; i < REQUESTS_PER_CLIENT; i++) {
+    // String message = randomString(random, 16);
+    // ByteBuffer buffer = ByteBuffer.wrap(MessageBuilder.createQueryMessage(1, 5));
+    // client.write(buffer);
+
+    // ByteBuffer readBuffer = ByteBuffer.allocate(1024);
+    // int bytesRead = client.read(readBuffer);
+    // readBuffer.flip();
+
+    // byte[] bytes = new byte[bytesRead];
+    // readBuffer.get(bytes);
+    // String response = new String(bytes);
+
+    // assertTrue(response.equals(message), "Response did not match request");
+    // }
+    // }
+    // }
+
+}
