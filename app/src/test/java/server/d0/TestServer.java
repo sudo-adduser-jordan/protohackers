@@ -51,7 +51,7 @@ public class TestServer {
     }
 
     @RepeatedTest(CLIENT_COUNT)
-    public void testSingleClientMultipleRequests() throws IOException {
+    public void testEchoRequests() throws IOException {
         try (SocketChannel client = SocketChannel.open()) {
             client.connect(new InetSocketAddress("localhost", Server.PORT));
             client.configureBlocking(true);
