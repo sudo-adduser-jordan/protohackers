@@ -24,39 +24,6 @@ public class Server
         new Server().startServer(PORT);
     }
 
-    public static void stopServer(Selector selector, ServerSocketChannel serverSocketChannel)
-    {
-        isRunning = false;
-        logger.info("Shutting down...");
-
-        try // to shut down server Gracefully
-        {
-            selector.wakeup(); // Unblocks select()
-            for (SelectionKey key : selector.keys())
-            {
-                if (key.isValid()) key.channel().close();
-            }
-
-            if (serverSocketChannel.isOpen()) {
-                serverSocketChannel.close();
-                logger.warning("ServerSocketChannel is closed for server: " + serverSocketChannel.getLocalAddress());
-                
-            }
-
-            if (selector.isOpen()){
-                selector.close();
-                logger.warning("Selector is closed for provider: " + selector.provider());
-            }
-
-            logger.info("Gracefully shutdown server.");
-        }
-        catch (IOException e)
-        {
-            System.out.println("Error during shutdown: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
     public void startServer(int port) throws IOException
     {
         try // to start the server
@@ -64,7 +31,8 @@ public class Server
             Selector selector = createSelector();
             ServerSocketChannel serverSocketChannel = createServerSocketChannel(port, selector);
 
-            Runtime.getRuntime().addShutdownHook(new Thread( () -> {
+            Runtime.getRuntime().addShutdownHook(new Thread(() ->
+            {
                 stopServer(selector, serverSocketChannel);
             }));
 
@@ -89,30 +57,6 @@ public class Server
         }
     }
 
-    public static void acceptConnections(Selector selector, SelectionKey key, ServerSocketChannel serverSocketChannel)
-            throws IOException
-    {
-        try // to acceptConnections
-        {
-            if (key.isAcceptable())
-            {
-                SocketChannel clientChannel = createClientSocketChannel(serverSocketChannel);
-                clientChannel.register(selector, SelectionKey.OP_READ, ByteBuffer.allocate(1024));
-                logger.info("Accepted connection from " + clientChannel.getRemoteAddress());
-            }
-
-            if (key.isReadable())
-            {
-                messageRead(key);
-            }
-        }
-        catch (Exception e)
-        {
-            logger.warning("Connection error: " + e.getMessage());
-            key.cancel();
-            key.channel().close();
-        }
-    }
 
     public static Selector createSelector() throws IOException
     {
@@ -131,6 +75,29 @@ public class Server
         return serverSocketChannel;
     }
 
+    public static void acceptConnections(Selector selector, SelectionKey key, ServerSocketChannel serverSocketChannel)
+            throws IOException
+    {
+        try // to acceptConnections
+        {
+            if (key.isAcceptable())
+            {
+                SocketChannel clientChannel = createClientSocketChannel(serverSocketChannel);
+                clientChannel.register(selector, SelectionKey.OP_READ, ByteBuffer.allocate(1024));
+                logger.info("Accepted connection from " + clientChannel.getRemoteAddress());
+            }
+
+            if (key.isReadable()) readChannel(key);
+        }
+        catch (Exception e)
+        {
+            logger.warning("Connection error: " + e.getMessage());
+            key.cancel();
+            key.channel().close();
+        }
+    }
+
+
     public static SocketChannel createClientSocketChannel(ServerSocketChannel serverSocketChannel) throws IOException
     {
         SocketChannel clientSocketChannel = serverSocketChannel.accept();
@@ -140,14 +107,17 @@ public class Server
         return clientSocketChannel;
     }
 
-    public static void messageWrite(SocketChannel clientSocketChannel, String message) throws IOException
+    public static void writeChannel(SocketChannel clientSocketChannel, String message) throws IOException
     {
+
         ByteBuffer responseBuffer = ByteBuffer.wrap(message.getBytes());
-        clientSocketChannel.write(responseBuffer);
+        while (responseBuffer.hasRemaining()) {
+            clientSocketChannel.write(responseBuffer);
+        }
         logger.info("Response:\t" + message);
     }
 
-    public static void messageRead(SelectionKey key) throws IOException
+    public static void readChannel(SelectionKey key) throws IOException
     {
         SocketChannel clientSocketChannel = (SocketChannel) key.channel();
         ByteBuffer buffer = ByteBuffer.allocate(1024);
@@ -165,8 +135,43 @@ public class Server
         String message = new String(buffer.array(), 0, buffer.limit());
         logger.info("Request:\t" + message);
 
-        messageWrite(clientSocketChannel, message);
+        writeChannel(clientSocketChannel, message);
         buffer.clear();
+    }
+
+    public static void stopServer(Selector selector, ServerSocketChannel serverSocketChannel)
+    {
+        isRunning = false;
+        logger.info("Shutting down...");
+
+        try // to shut down server Gracefully
+        {
+            selector.wakeup(); // Unblocks select()
+            for (SelectionKey key : selector.keys())
+            {
+                if (key.isValid()) key.channel().close();
+            }
+
+            if (serverSocketChannel.isOpen())
+            {
+                serverSocketChannel.close();
+                logger.warning("ServerSocketChannel is closed for server: " + serverSocketChannel.getLocalAddress());
+
+            }
+
+            if (selector.isOpen())
+            {
+                selector.close();
+                logger.warning("Selector is closed for provider: " + selector.provider());
+            }
+
+            logger.info("Gracefully shutdown server.");
+        }
+        catch (IOException e)
+        {
+            System.out.println("Error during shutdown: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
 }
