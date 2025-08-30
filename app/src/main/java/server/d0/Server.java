@@ -121,10 +121,9 @@ public class Server
         int bytesRead = clientSocketChannel.read(buffer);
         if (bytesRead == -1)
         {
-            clientSocketChannel.close();
-            key.cancel();
-            logger.warning("Connection closed by client: " + clientSocketChannel.socket().getInetAddress());
-            return;
+//            clientSocketChannel.close();
+//            key.cancel();
+//            logger.warning("Connection closed by client: " + clientSocketChannel.socket().getInetAddress());
         }
 //        logger.info("Request: \t" + message);
         writeChannel(clientSocketChannel, buffer);
