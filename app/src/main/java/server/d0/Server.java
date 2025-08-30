@@ -31,10 +31,7 @@ public class Server
             Selector selector = createSelector();
             ServerSocketChannel serverSocketChannel = createServerSocketChannel(port, selector);
 
-            Runtime.getRuntime().addShutdownHook(new Thread(() ->
-            {
-                stopServer(selector, serverSocketChannel);
-            }));
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> stopServer(selector, serverSocketChannel)));
 
             while (isRunning)
             {
@@ -53,7 +50,7 @@ public class Server
         catch (Exception e)
         {
             logger.warning("Error starting server on port:" + port);
-            e.printStackTrace();
+//            e.printStackTrace();
         }
     }
 
@@ -111,10 +108,8 @@ public class Server
     {
 
         ByteBuffer responseBuffer = ByteBuffer.wrap(message.getBytes());
-        while (responseBuffer.hasRemaining()) {
-            clientSocketChannel.write(responseBuffer);
-        }
-        // logger.info("Response:\t" + message);
+        clientSocketChannel.write(responseBuffer);
+         logger.info("Response:\t" + message);
     }
 
     public static void readChannel(SelectionKey key) throws IOException
@@ -170,7 +165,7 @@ public class Server
         catch (IOException e)
         {
             System.out.println("Error during shutdown: " + e.getMessage());
-            e.printStackTrace();
+//            e.printStackTrace();
         }
     }
 

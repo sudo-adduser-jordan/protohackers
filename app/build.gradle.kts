@@ -9,13 +9,10 @@ repositories {
     mavenCentral()
 }
 
- val mockitoAgent = configurations.create("mockitoAgent")
 dependencies {
     implementation(libs.guava)
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    // testImplementation("org.mockito:mockito-core:5.19.0")
-    // mockitoAgent("org.mockito:mockito-core:5.19.0") { isTransitive = false }
     implementation("com.fasterxml.jackson.core:jackson-databind:2.19.2")
  }
 
