@@ -28,12 +28,12 @@ public class Server
     private static final char INSERT_CHAR = 'I';
     private static final char QUERY_CHAR = 'Q';
 
-    public static void main(String[] args) throws IOException
+    public static void main(String[] args)
     {
         new Server().startServer(PORT);
     }
 
-    public void startServer(int port) throws IOException
+    public void startServer(int port)
     {
         try // to start the server
         {
@@ -91,35 +91,35 @@ public class Server
             if (key.isAcceptable())
             {
                 SocketChannel clientChannel = createClientSocketChannel(serverSocketChannel);
-                clientChannel.register(selector, SelectionKey.OP_READ, ByteBuffer.allocate(1024));
+                clientChannel.register(selector, SelectionKey.OP_READ, new SessionMemoryCache());
                 logger.info("Accepted connection from " + clientChannel.getRemoteAddress());
-
             }
+            
             if (key.isReadable())
             {
-                SessionMemoryCache sessionMemoryCache = new SessionMemoryCache();
-                String message = readChannel(key);
-                Request request = messageToRequest(message.getBytes());
+                Request request = readChannel(key);
+                SessionMemoryCache sessionMemoryCache = (SessionMemoryCache) key.attachment();
 
                 switch (request.getMessageType())
                 {
                 case INSERT -> {
                     sessionMemoryCache.addPrice(request.getFirstValue(), request.getSecondValue());
-                    writeChannel(key, new String(messageToResponse(73)));
+                    writeChannel(key, 73);
                 }
                 case QUERY -> {
                     int average = sessionMemoryCache.getAveragePriceInRange(request.getFirstValue(),
-                            request.getSecondValue());
-                    writeChannel(key, new String(messageToResponse(average)));
+                    request.getSecondValue());
+                    writeChannel(key, average);
                 }
                 }
             }
         }
         catch (Exception e)
         {
-            logger.warning("Connection error: " + e.getMessage());
             key.cancel();
             key.channel().close();
+            logger.warning("Connection error.");
+            e.printStackTrace();
         }
     }
 
@@ -132,72 +132,66 @@ public class Server
         return clientSocketChannel;
     }
 
-    public static void writeChannel(SelectionKey key, String message) throws IOException
+    // Hexadecimal: 00 00 13 f3
+    // Decoded: 5107 // intToBigEndianBytes
+    public static void writeChannel(SelectionKey key, Integer value) throws IOException
     {
         SocketChannel clientSocketChannel = (SocketChannel) key.channel();
-        ByteBuffer responseBuffer = ByteBuffer.wrap(message.getBytes());
+        ByteBuffer responseBuffer = ByteBuffer.allocate(RESPONSE_LENGTH);
+
+        if (value == null)
+        {
+            responseBuffer.putInt(0);
+        }
+        else
+        {
+            responseBuffer.putInt(value);
+        }
+
+        responseBuffer.flip();
+
+        logger.info("Response: \t | " + responseBuffer.getInt(0)) ;
         clientSocketChannel.write(responseBuffer);
-        logger.info("Response:\t" + message);
+
     }
 
-    public static String readChannel(SelectionKey key) throws IOException
+    // Byte: | 0 | 1 2 3 4 | 5 6 7 8 |
+    // Type: |char | int32 | int32 | // @Builder pattern
+    public static Request readChannel(SelectionKey key) throws IOException
     {
         SocketChannel clientSocketChannel = (SocketChannel) key.channel();
-        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        ByteBuffer responseByteBuffer = ByteBuffer.allocate(REQUEST_LENGTH);
+        Request.RequestBuilder builder = Request.builder();
 
-        int bytesRead = clientSocketChannel.read(buffer);
+        int bytesRead = clientSocketChannel.read(responseByteBuffer);
         if (bytesRead == -1)
         {
             clientSocketChannel.close();
             key.cancel();
             logger.warning("Connection closed by client: " + clientSocketChannel.socket().getInetAddress());
-            return "cant read channel";
         }
 
-        buffer.flip();
-        String message = new String(buffer.array(), 0, buffer.limit());
-        // logger.info("Request: \t" + message);
+        responseByteBuffer.flip();
+        byte[] responseByteArray = responseByteBuffer.array();
 
-        // writeChannel(clientSocketChannel, message);
-        buffer.clear();
-        return message;
-    }
+        int firstValue = ByteBuffer.wrap(responseByteArray, 1, 4).order(ByteOrder.BIG_ENDIAN).getInt();
+        int secondValue = ByteBuffer.wrap(responseByteArray, 5, 4).order(ByteOrder.BIG_ENDIAN).getInt();
 
-    // Hexadecimal: 00 00 13 f3
-    // Decoded: 5107 // intToBigEndianBytes
-    public static byte[] messageToResponse(Integer value)
-    {
-        ByteBuffer buffer = ByteBuffer.allocate(RESPONSE_LENGTH).order(ByteOrder.BIG_ENDIAN);
-        if (value == null)
-            buffer.putInt(0);
-        else
-            buffer.putInt(value);
-        return buffer.array();
-    }
-
-    // Byte: | 0 | 1 2 3 4 | 5 6 7 8 |
-    // Type: |char | int32 | int32 | // @Builder pattern
-    public static Request messageToRequest(byte[] message)
-    {
-        Request.RequestBuilder builder = Request.builder();
-
-        byte messageTypeByte = message[0];
-        switch (messageTypeByte)
+        switch (responseByteArray[0])
         {
         case INSERT_CHAR:
             builder.MessageType(MessageTypes.INSERT);
+            logger.debug("Request: \t | " + MessageTypes.INSERT + " " + firstValue + " " + secondValue);
             break;
         case QUERY_CHAR:
             builder.MessageType(MessageTypes.QUERY);
+            logger.debug("Request: \t | " + MessageTypes.QUERY + " " + firstValue + " " + secondValue);
             break;
         default:
-            logger.error("Bad request.");
+            logger.error("Bad request: " + new String(responseByteArray));
+            key.channel().close();
             break;
         }
-
-        int firstValue = ByteBuffer.wrap(message, 1, 4).order(ByteOrder.BIG_ENDIAN).getInt();
-        int secondValue = ByteBuffer.wrap(message, 5, 4).order(ByteOrder.BIG_ENDIAN).getInt();
-        logger.info("Request: \t" + (char) messageTypeByte + " " + firstValue + "\t" + secondValue);
 
         return builder.FirstValue(firstValue).SecondValue(secondValue).build();
     }

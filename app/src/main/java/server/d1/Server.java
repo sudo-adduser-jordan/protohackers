@@ -33,12 +33,12 @@ public class Server
 				.disable(MapperFeature.ALLOW_COERCION_OF_SCALARS).build();
 	}
 
-	public static void main(String[] args) throws IOException
+	public static void main(String[] args) 
 	{
 		new Server().startServer(PORT);
 	}
 
-	public void startServer(int port) throws IOException
+	public void startServer(int port) 
 	{
 		try // to start the server
 		{

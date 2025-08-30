@@ -9,47 +9,33 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.RepeatedTest;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Assertions;
 
 class TestServer
 {
 
     private static Thread serverThread;
-    // private static final int REQUESTS_PER_CLIENT = 10;
-    private static final int CLIENT_COUNT = 5;
-    private final static int TEST_PORT = 6968;
+    // private final int REQUESTS_PER_CLIENT = 10;
+    private final int CLIENT_COUNT = 5;
+    private static final int TEST_PORT = 6968;
 
     @BeforeAll
     public static void startServer() throws InterruptedException
     {
         serverThread = new Thread(() ->
         {
-            try
-            {
                 new Server().startServer(TEST_PORT);
-            }
-            catch (IOException e)
-            {
-                e.printStackTrace();
-            }
         });
         serverThread.start();
-        serverThread.sleep(500);
+        Thread.sleep(250);
     }
 
     @AfterAll
-    public static void stopServer()
+    public static void stopServer() throws InterruptedException
     {
-        // Server.isRunning = false;
+        Server.isRunning = false;
         serverThread.interrupt();
-        try
-        {
             serverThread.join(2000);
-        }
-        catch (InterruptedException ignored)
-
-        {
-        }
     }
 
     @RepeatedTest(CLIENT_COUNT)
@@ -71,7 +57,7 @@ class TestServer
         readBuffer.get(bytes);
         String response = new String(bytes);
 
-        assertTrue(response.equals(JSONRequests.validJSONResponse), "Response did not match request");
+        Assertions.assertTrue(response.equals(JSONRequests.validJSONResponse), "Response did not match request");
     }
 
     @RepeatedTest(CLIENT_COUNT)
@@ -96,7 +82,7 @@ class TestServer
             readBuffer.get(bytes);
             String response = new String(bytes);
 
-            assertTrue(response.equals(message), "Response did not match request: " + message);
+            Assertions.assertTrue(response.equals(message), "Response did not match request: " + message);
         }
     }
 

@@ -19,12 +19,12 @@ public class Server
     volatile static boolean isRunning = true;
     public static final int PORT = 42069;
 
-    public static void main(String[] args) throws IOException
+    public static void main(String[] args)
     {
         new Server().startServer(PORT);
     }
 
-    public void startServer(int port) throws IOException
+    public void startServer(int port) 
     {
         try // to start the server
         {
