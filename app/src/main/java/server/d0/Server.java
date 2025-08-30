@@ -34,7 +34,7 @@ public class Server
                 return; // Skip invalid keys
 
             if (key.isAcceptable()) handleAccept(key);
-            if (key.isValid()) if (key.isReadable()) handleRead(key);
+            if (key.isReadable()) handleRead(key);
             if (key.isValid()) if (key.isWritable()) handleWrite(key);
         }
         catch (Exception e)
@@ -52,65 +52,42 @@ public class Server
         SocketChannel clientChannel = serverChannel.accept();
         clientChannel.configureBlocking(false);
         clientChannel.register(key.selector(), SelectionKey.OP_READ, new ChannelContext(clientChannel));
+        logger.info("Client connected to channel: " + clientChannel.socket().getInetAddress());
     }
 
     public static void handleWrite(SelectionKey key) throws IOException
     {
         ChannelContext context = (ChannelContext) key.attachment();
-        ByteBuffer writeByteBuffer = context.getWriteBuffer();
-        if (writeByteBuffer.hasRemaining())
-        {
-            context.getChannel()
-                   .write(writeByteBuffer);
-
-            writeByteBuffer.flip();
-            String data = Charset.defaultCharset()
-                                 .decode(writeByteBuffer)
-                                 .toString();
-//            logger.info("Response: \t" + data);
-
-            writeByteBuffer.clear();
-            key.interestOps(SelectionKey.OP_READ);
-        }
+        context.getChannel().write(context.getWriteBuffer().flip());
+        context.getWriteBuffer().clear();
+        key.interestOps(SelectionKey.OP_READ);
     }
 
-    public static void handleRead(SelectionKey key)
+    public static void handleRead(SelectionKey key) throws Exception
     {
-        try
+        ChannelContext context = (ChannelContext) key.attachment();
+        ByteBuffer readByteBuffer = context.getReadBuffer();
+        readByteBuffer.clear();
+
+        int bytesRead = context.getChannel().read(readByteBuffer);
+        if (bytesRead == -1)
         {
-            ChannelContext context = (ChannelContext) key.attachment();
-            ByteBuffer readByteBuffer = context.getReadBuffer();
-            readByteBuffer.clear();
-
-            int bytesRead = context.getChannel()
-                                   .read(readByteBuffer);
-            if (bytesRead == -1)
-            {
-                context.getChannel()
-                       .close();
-                key.cancel();
-                return;
-            }
-            readByteBuffer.flip();
-
-            String data = Charset.defaultCharset()
-                                 .decode(readByteBuffer)
-                                 .toString();
-//            logger.info("Request: \t" + data);
-
-            context.getWriteBuffer()
-                   .put(data.getBytes());
-
-            context.getWriteBuffer()
-                   .flip();
-
-            key.interestOps(SelectionKey.OP_WRITE);
+            context.getChannel()
+                   .close();
+            key.cancel();
+            return;
         }
-        catch (Exception e)
-        {
-            logger.warning("Read failed for channel: " );
-            e.printStackTrace();
-        }
+
+//        readByteBuffer.flip();
+//        String data = Charset.defaultCharset()
+//                             .decode(readByteBuffer)
+//                             .toString();
+//        logger.info("Request: \t" + data);
+
+        context.getWriteBuffer().clear();
+        context.getWriteBuffer().put(readByteBuffer.flip());
+
+        key.interestOps(SelectionKey.OP_WRITE);
     }
 
 
