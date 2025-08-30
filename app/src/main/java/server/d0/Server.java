@@ -86,7 +86,6 @@ public class Server
 
             if (key.isReadable()) {
                 readChannel(key);
-                key.channel().close();
             };
         }
         catch (Exception e)
@@ -107,11 +106,10 @@ public class Server
         return clientSocketChannel;
     }
 
-    public static void writeChannel(SocketChannel clientSocketChannel, String message) throws IOException
+    public static void writeChannel(SocketChannel clientSocketChannel, ByteBuffer responseByteBuffer) throws IOException
     {
 
-        ByteBuffer responseBuffer = ByteBuffer.wrap(message.getBytes());
-        clientSocketChannel.write(responseBuffer);
+        clientSocketChannel.write(responseByteBuffer);
 //         logger.info("Response:\t" + message);
     }
 
@@ -128,13 +126,8 @@ public class Server
             logger.warning("Connection closed by client: " + clientSocketChannel.socket().getInetAddress());
             return;
         }
-
-        buffer.flip();
-        String message = new String(buffer.array(), 0, buffer.limit());
 //        logger.info("Request: \t" + message);
-
-        writeChannel(clientSocketChannel, message);
-        buffer.clear();
+        writeChannel(clientSocketChannel, buffer);
     }
 
     public static void stopServer(Selector selector, ServerSocketChannel serverSocketChannel)
