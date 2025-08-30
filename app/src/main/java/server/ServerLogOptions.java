@@ -5,10 +5,9 @@ import java.util.logging.Logger;
 
 public class ServerLogOptions
 {
-    private final Logger logger;
-
     public static final Level DEBUG = new Level("DEBUG", Level.FINE.intValue() + 1)
     {};
+    private final Logger logger;
 
     public ServerLogOptions(Logger logger)
     {

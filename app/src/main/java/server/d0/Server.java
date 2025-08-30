@@ -1,59 +1,28 @@
 package server.d0;
 
+import server.ServerLogFormatter;
+
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import server.ServerLogFormatter;
-
 public class Server
 {
+    public static final int PORT = 42069;
     private static final Logger logger = ServerLogFormatter.getLogger(Server.class);
     volatile static boolean isRunning = true;
-    public static final int PORT = 42069;
 
     public static void main(String[] args)
     {
         new Server().startServer(PORT);
     }
-
-    public void startServer(int port) 
-    {
-        try // to start the server
-        {
-            Selector selector = createSelector();
-            ServerSocketChannel serverSocketChannel = createServerSocketChannel(port, selector);
-
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> stopServer(selector, serverSocketChannel)));
-
-            while (isRunning)
-            {
-                selector.select();
-
-                Set<SelectionKey> selectedKeys = selector.selectedKeys();
-                Iterator<SelectionKey> iterator = selectedKeys.iterator();
-                while (iterator.hasNext())
-                {
-                    SelectionKey key = iterator.next();
-                    iterator.remove();
-                    acceptConnections(selector, key, serverSocketChannel);
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            logger.warning("Error starting server on port:" + port);
-//            e.printStackTrace();
-        }
-    }
-
 
     public static Selector createSelector() throws IOException
     {
@@ -65,15 +34,15 @@ public class Server
     {
         ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
         serverSocketChannel.configureBlocking(false);
-        serverSocketChannel.socket().bind(new InetSocketAddress(port));
+        serverSocketChannel.socket()
+                           .bind(new InetSocketAddress(port));
         serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 
         logger.info("Server SocketChannel created for provider: " + selector.provider());
         return serverSocketChannel;
     }
 
-    public static void acceptConnections(Selector selector, SelectionKey key, ServerSocketChannel serverSocketChannel)
-            throws IOException
+    public static void acceptConnections(Selector selector, SelectionKey key, ServerSocketChannel serverSocketChannel) throws IOException
     {
         try // to acceptConnections
         {
@@ -84,18 +53,19 @@ public class Server
                 logger.info("Accepted connection from " + clientChannel.getRemoteAddress());
             }
 
-            if (key.isReadable()) {
+            if (key.isReadable())
+            {
                 readChannel(key);
-            };
+            }
         }
         catch (Exception e)
         {
             logger.warning("Connection error: " + e.getMessage());
             key.cancel();
-            key.channel().close();
+            key.channel()
+               .close();
         }
     }
-
 
     public static SocketChannel createClientSocketChannel(ServerSocketChannel serverSocketChannel) throws IOException
     {
@@ -106,19 +76,22 @@ public class Server
         return clientSocketChannel;
     }
 
-    public static void writeChannel(SocketChannel clientSocketChannel, ByteBuffer responseByteBuffer) throws IOException {
+    public static void writeChannel(SocketChannel clientSocketChannel, ByteBuffer responseByteBuffer) throws IOException
+    {
         while (responseByteBuffer.hasRemaining())
         {
             clientSocketChannel.write(responseByteBuffer);
         }
     }
 
-    public static void readChannel(SelectionKey key) throws IOException {
+    public static void readChannel(SelectionKey key) throws IOException
+    {
         SocketChannel clientSocketChannel = (SocketChannel) key.channel();
         ByteBuffer buffer = ByteBuffer.allocate(1024);
 
         int bytesRead = clientSocketChannel.read(buffer);
-        if (bytesRead == -1) {
+        if (bytesRead == -1)
+        {
             clientSocketChannel.close();
             key.cancel();
             return;
@@ -137,7 +110,8 @@ public class Server
             selector.wakeup(); // Unblocks select()
             for (SelectionKey key : selector.keys())
             {
-                if (key.isValid()) key.channel().close();
+                if (key.isValid()) key.channel()
+                                      .close();
             }
 
             if (serverSocketChannel.isOpen())
@@ -158,7 +132,36 @@ public class Server
         catch (IOException e)
         {
             System.out.println("Error during shutdown: " + e.getMessage());
-//            e.printStackTrace();
+        }
+    }
+
+    public void startServer(int port)
+    {
+        try // to start the server
+        {
+            Selector selector = createSelector();
+            ServerSocketChannel serverSocketChannel = createServerSocketChannel(port, selector);
+
+            Runtime.getRuntime()
+                   .addShutdownHook(new Thread(() -> stopServer(selector, serverSocketChannel)));
+
+            while (isRunning)
+            {
+                selector.select();
+
+                Set<SelectionKey> selectedKeys = selector.selectedKeys();
+                Iterator<SelectionKey> iterator = selectedKeys.iterator();
+                while (iterator.hasNext())
+                {
+                    SelectionKey key = iterator.next();
+                    iterator.remove();
+                    acceptConnections(selector, key, serverSocketChannel);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            logger.warning("Error starting server on port:" + port);
         }
     }
 

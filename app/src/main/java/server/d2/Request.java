@@ -12,13 +12,15 @@ enum MessageTypes
 // Type:  |char |         int32         |         int32         |
 @Getter
 @Builder
-class Request {
+class Request
+{
     private final MessageTypes MessageType;
     private final int FirstValue; // 32
     private final int SecondValue; // 32
 
     @Override // review format
-    public String toString() {
+    public String toString()
+    {
         return "%s, %d, %d".formatted(MessageType.toString(), FirstValue, SecondValue);
     }
 }

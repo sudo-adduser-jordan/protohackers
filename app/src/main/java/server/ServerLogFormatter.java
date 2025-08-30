@@ -1,10 +1,6 @@
 package server;
 
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Formatter;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
+import java.util.logging.*;
 
 public class ServerLogFormatter extends Formatter
 { // a drop in replacement for standard lib logs
@@ -29,32 +25,33 @@ public class ServerLogFormatter extends Formatter
             logger.addHandler(handler);
         }
         return logger;
-    };
+    }
 
     @Override
     public String format(LogRecord record)
     {
         String timestamp = String.format("%1$tF %1$tT", new java.util.Date(record.getMillis()));
         String levelColor;
-        String levelStr = record.getLevel().toString();
+        String levelStr = record.getLevel()
+                                .toString();
 
         switch (levelStr)
         {
-        case "SEVERE":
-            levelColor = RED;
-            break;
-        case "WARNING":
-            levelColor = YELLOW;
-            break;
-        case "DEBUG":
-            levelColor = BLUE;
-            break;
-        case "INFO":
-            levelColor = GREEN;
-            break;
-        default:
-            levelColor = RESET;
-            break;
+            case "SEVERE":
+                levelColor = RED;
+                break;
+            case "WARNING":
+                levelColor = YELLOW;
+                break;
+            case "DEBUG":
+                levelColor = BLUE;
+                break;
+            case "INFO":
+                levelColor = GREEN;
+                break;
+            default:
+                levelColor = RESET;
+                break;
         }
 
         String levelFormatted = RESET + "[" + levelColor + levelStr + RESET + "]";

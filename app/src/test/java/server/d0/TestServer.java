@@ -14,21 +14,10 @@ import java.util.Random;
 public class TestServer
 {
 
+    private static final int TEST_PORT = 6969;
     private static Thread serverThread;
     private final int REQUESTS_PER_CLIENT = 10;
     private final int CLIENT_COUNT = 5;
-    private  static final int TEST_PORT = 6969;
-
-    private String randomString(Random random, int length)
-    {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        StringBuilder sb = new StringBuilder(length);
-        for (int i = 0; i < length; i++)
-        {
-            sb.append(chars.charAt(random.nextInt(chars.length())));
-        }
-        return sb.toString();
-    }
 
     @BeforeAll
     public static void startServer() throws InterruptedException
@@ -42,11 +31,22 @@ public class TestServer
     }
 
     @AfterAll
-    public static void stopServer()  throws InterruptedException
+    public static void stopServer() throws InterruptedException
     {
         Server.isRunning = false;
         serverThread.interrupt();
         serverThread.join(2000);
+    }
+
+    private String randomString(Random random, int length)
+    {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++)
+        {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
     @RepeatedTest(CLIENT_COUNT)
@@ -72,7 +72,7 @@ public class TestServer
                 readBuffer.get(bytes);
                 String response = new String(bytes);
 
-                Assertions.assertTrue(response.equals(message), "Response did not match request");
+                Assertions.assertEquals(response, message, "Response did not match request");
             }
         }
     }
