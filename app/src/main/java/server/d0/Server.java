@@ -109,7 +109,7 @@ public class Server
 
         ByteBuffer responseBuffer = ByteBuffer.wrap(message.getBytes());
         clientSocketChannel.write(responseBuffer);
-         logger.info("Response:\t" + message);
+//         logger.info("Response:\t" + message);
     }
 
     public static void readChannel(SelectionKey key) throws IOException
