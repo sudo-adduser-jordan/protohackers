@@ -54,17 +54,11 @@ public class TestServer
     }
 
     @AfterAll
-    public static void stopServer()
+    public static void stopServer() throws InterruptedException
     {
         Server.isRunning = false;
         serverThread.interrupt();
-        try
-        {
-            serverThread.join(2000);
-        }
-        catch (InterruptedException ignored)
-        {
-        }
+        serverThread.join(2000);
     }
 
     @RepeatedTest(CLIENT_COUNT)
