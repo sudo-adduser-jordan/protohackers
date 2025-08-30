@@ -104,7 +104,7 @@ public class Server
         try
         {
             RequestJSON requestJSON = context.getJsonMapper().readValue(data, RequestJSON.class);
-            logger.severe(requestJSON.toString());
+            logger.info(requestJSON.toString());
 
 
             if (!Objects.equals(requestJSON.getMethod(), "isPrime"))
@@ -116,16 +116,17 @@ public class Server
 
             context.getWriteBuffer().clear();
             context.getWriteBuffer().put(context.getJsonMapper().writeValueAsBytes(responseJSON));
+            key.interestOps(SelectionKey.OP_WRITE);
+
         }
         catch (Exception e)
         {
             logger.warning("Invalid json: " + data);
             context.getWriteBuffer().clear();
             context.getWriteBuffer().put(readByteBuffer.flip());
+            key.interestOps(SelectionKey.OP_WRITE);
         }
 
-
-        key.interestOps(SelectionKey.OP_WRITE);
     }
 
 
