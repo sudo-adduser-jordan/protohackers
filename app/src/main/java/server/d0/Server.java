@@ -118,15 +118,10 @@ public class Server
         SocketChannel clientSocketChannel = (SocketChannel) key.channel();
         ByteBuffer buffer = ByteBuffer.allocate(1024);
 
-        int bytesRead = clientSocketChannel.read(buffer);
-        if (bytesRead == -1)
+        while (clientSocketChannel.read(buffer) != -1)
         {
-//            clientSocketChannel.close();
-//            key.cancel();
-//            logger.warning("Connection closed by client: " + clientSocketChannel.socket().getInetAddress());
+            writeChannel(clientSocketChannel, buffer);
         }
-//        logger.info("Request: \t" + message);
-        writeChannel(clientSocketChannel, buffer);
     }
 
     public static void stopServer(Selector selector, ServerSocketChannel serverSocketChannel)
