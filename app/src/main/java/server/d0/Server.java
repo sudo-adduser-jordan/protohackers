@@ -90,7 +90,6 @@ public class Server
                              .decode(readByteBuffer)
                              .toString();
         logger.info("Request: \t" + data);
-//        readByteBuffer.rewind();
 
         context.getWriteBuffer().clear();
         context.getWriteBuffer().put(readByteBuffer.flip());
