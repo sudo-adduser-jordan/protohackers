@@ -1,11 +1,13 @@
 package server;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
-@Data
+@Getter
+@Setter
 public class ChannelContext
 {
     private final SocketChannel channel;

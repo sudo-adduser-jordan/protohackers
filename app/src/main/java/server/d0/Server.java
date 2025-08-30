@@ -26,45 +26,25 @@ public class Server
         new Server().startServer(PORT);
     }
 
-    public static Selector createSelector() throws IOException
-    {
-        logger.info("Server Selector created.");
-        return Selector.open();
-    }
-
-    public static ServerSocketChannel createServerSocketChannel(int port, Selector selector) throws IOException
-    {
-        ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
-        serverSocketChannel.configureBlocking(false);
-        serverSocketChannel.socket()
-                           .bind(new InetSocketAddress(port));
-        serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-
-        logger.info("Server SocketChannel created for provider: " + selector.provider());
-        return serverSocketChannel;
-    }
-
     public static void acceptConnections(SelectionKey key) throws IOException
     {
-        if (!key.isValid())
+        try // to acceptConnections
         {
-            try // to acceptConnections
-            {
-                if (key.isAcceptable()) handleAccept(key);
-                if (key.isReadable()) handleRead(key);
-                if (key.isWritable()) handleWrite(key);
-            }
-            catch (Exception e)
-            {
-                logger.warning("Connection error: " + e.getMessage());
-                key.cancel();
-                key.channel()
-                   .close();
-                e.printStackTrace();
-            }
+            if (!key.isValid())
+                return; // Skip invalid keys
+
+            if (key.isAcceptable()) handleAccept(key);
+            if (key.isValid()) if (key.isReadable()) handleRead(key);
+            if (key.isValid()) if (key.isWritable()) handleWrite(key);
+        }
+        catch (Exception e)
+        {
+            logger.warning("Connection error: " + e.getMessage());
+            key.cancel();
+            key.channel()
+               .close();
         }
     }
-
 
     private static void handleAccept(SelectionKey key) throws Exception
     {
@@ -82,9 +62,13 @@ public class Server
         {
             context.getChannel()
                    .write(writeByteBuffer);
-        }
-        if (!writeByteBuffer.hasRemaining())
-        {
+
+            writeByteBuffer.flip();
+            String data = Charset.defaultCharset()
+                                 .decode(writeByteBuffer)
+                                 .toString();
+            logger.info("Response: \t" + data);
+
             writeByteBuffer.clear();
             key.interestOps(SelectionKey.OP_READ);
         }
@@ -94,7 +78,6 @@ public class Server
     {
         try
         {
-
             ChannelContext context = (ChannelContext) key.attachment();
             ByteBuffer readByteBuffer = context.getReadBuffer();
             readByteBuffer.clear();
@@ -105,7 +88,7 @@ public class Server
             {
                 context.getChannel()
                        .close();
-////                key.cancel();
+                key.cancel();
                 return;
             }
             readByteBuffer.flip();
@@ -113,6 +96,7 @@ public class Server
             String data = Charset.defaultCharset()
                                  .decode(readByteBuffer)
                                  .toString();
+            logger.info("Request: \t" + data);
 
             context.getWriteBuffer()
                    .put(data.getBytes());
@@ -168,11 +152,21 @@ public class Server
     {
         try // to start the server
         {
-            Selector selector = createSelector();
-            ServerSocketChannel serverSocketChannel = createServerSocketChannel(port, selector);
+            logger.info("Starting server on port: " + port);
+
+            Selector selector = Selector.open();
+            logger.info("Selector created for server: " + selector.provider());
+
+            ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+            serverSocketChannel.configureBlocking(false);
+            serverSocketChannel.socket()
+                               .bind(new InetSocketAddress(port));
+            serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+            logger.info("ServerSocketChannel created for server: " + selector.provider());
 
             Runtime.getRuntime()
                    .addShutdownHook(new Thread(() -> stopServer(selector, serverSocketChannel)));
+            logger.info("Graceful shutdown hook created for server: " + selector.provider());
 
             while (isRunning)
             {
