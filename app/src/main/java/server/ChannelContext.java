@@ -1,5 +1,8 @@
 package server;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,12 +16,18 @@ public class ChannelContext
     private final SocketChannel channel;
     private final ByteBuffer readBuffer;
     private final ByteBuffer writeBuffer;
-    private final StringBuilder messageBuffer; // for assembling partial messages
+    private final StringBuilder messageBuffer;
+    private final JsonMapper jsonMapper;
 
     public ChannelContext(SocketChannel channel) {
         this.channel = channel;
         this.readBuffer = ByteBuffer.allocate(1024);
         this.writeBuffer = ByteBuffer.allocate(1024);
         this.messageBuffer = new StringBuilder();
+        this.jsonMapper = JsonMapper.builder()
+                                    .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+                                    .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                                    .disable(MapperFeature.ALLOW_COERCION_OF_SCALARS)
+                                    .build();
     }
 }

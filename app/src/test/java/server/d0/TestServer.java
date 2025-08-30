@@ -16,16 +16,14 @@ public class TestServer
 
     private static final int TEST_PORT = 6969;
     private static Thread serverThread;
-    private final int REQUESTS_PER_CLIENT = 10;
+    private static final int REQUESTS_PER_CLIENT = 10;
     private final int CLIENT_COUNT = 5;
 
     @BeforeAll
     public static void startServer() throws InterruptedException
     {
         serverThread = new Thread(() ->
-        {
-            new Server().startServer(TEST_PORT);
-        });
+                new Server().startServer(TEST_PORT));
         serverThread.start();
         Thread.sleep(250);
     }
@@ -38,11 +36,11 @@ public class TestServer
         serverThread.join(2000);
     }
 
-    private String randomString(Random random, int length)
+    private String randomString(Random random)
     {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        StringBuilder sb = new StringBuilder(length);
-        for (int i = 0; i < length; i++)
+        StringBuilder sb = new StringBuilder(16);
+        for (int i = 0; i < 16; i++)
         {
             sb.append(chars.charAt(random.nextInt(chars.length())));
         }
@@ -60,7 +58,7 @@ public class TestServer
 
             for (int i = 0; i < REQUESTS_PER_CLIENT; i++)
             {
-                String message = randomString(random, 16);
+                String message = randomString(random);
                 ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
                 client.write(buffer);
 

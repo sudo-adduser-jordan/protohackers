@@ -22,9 +22,7 @@ class TestServer
     public static void startServer() throws InterruptedException
     {
         serverThread = new Thread(() ->
-        {
-            new Server().startServer(TEST_PORT);
-        });
+                new Server().startServer(TEST_PORT));
         serverThread.start();
         Thread.sleep(250);
     }
@@ -42,7 +40,7 @@ class TestServer
     {
         SocketChannel client = SocketChannel.open();
         client.connect(new InetSocketAddress("localhost", TEST_PORT));
-        // client.configureBlocking(true);
+         client.configureBlocking(true);
 
         String message = JSONRequests.validJSON;
         ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
@@ -67,9 +65,8 @@ class TestServer
         client.configureBlocking(true);
 
         String[] inValidRequestJSON = JSONRequests.getInvalidJSONRequests();
-        for (int i = 0; i < inValidRequestJSON.length; i++)
+        for (String message : inValidRequestJSON)
         {
-            String message = inValidRequestJSON[i];
             ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
             client.write(buffer);
 
