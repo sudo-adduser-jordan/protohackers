@@ -1,4 +1,4 @@
-package server.d2;
+package server;
 
 import java.util.Map;
 import java.util.Set;

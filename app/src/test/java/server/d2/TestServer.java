@@ -19,33 +19,11 @@ public class TestServer
     private static final int TEST_PORT = 6967;
     private static Thread serverThread;
 
-    // public static String bytesToHex(byte[] bytes) {
-    // StringBuilder sb = new StringBuilder();
-    // for (byte b : bytes) {
-    // sb.append(String.format("%02X", b));
-    // }
-    // return sb.toString();
-    // }
-
-    // private String randomString(Random random, int length)
-    // {
-    // String chars =
-    // "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    // StringBuilder sb = new StringBuilder(length);
-    // for (int i = 0; i < length; i++)
-    // {
-    // sb.append(chars.charAt(random.nextInt(chars.length())));
-    // }
-    // return sb.toString();
-    // }
-
     @BeforeAll
     public static void startServer() throws InterruptedException
     {
         serverThread = new Thread(() ->
-        {
-            new Server().startServer(TEST_PORT);
-        });
+                new Server().startServer(TEST_PORT));
         serverThread.start();
         Thread.sleep(250);
     }
@@ -70,10 +48,11 @@ public class TestServer
         {
             byte[] request = MessageBuilder.createInsertMessage(i + 1, i + 2);
             ByteBuffer requestByteBuffer = ByteBuffer.wrap(request);
-            ByteBuffer responseBuffer = ByteBuffer.allocate(1024);
+            ByteBuffer responseBuffer = ByteBuffer.allocate(4);
             ByteBuffer expectedByteBuffer = ByteBuffer.allocate(4);
-            expectedByteBuffer.putChar('I')
-                              .order(ByteOrder.BIG_ENDIAN);
+            expectedByteBuffer
+                              .putInt('I')
+                    .order(ByteOrder.BIG_ENDIAN);
 
             client.write(requestByteBuffer);
 
@@ -83,7 +62,7 @@ public class TestServer
                 System.out.println("Connection closed by client: " + client.socket()
                                                                            .getInetAddress());
             }
-            Assertions.assertEquals(requestByteBuffer.array(), requestByteBuffer.array(), "Response bytes do not match expected");
+            Assertions.assertEquals(new String(expectedByteBuffer.array()), new String(responseBuffer.array()), "Response bytes do not match expected");
         }
 
         // Send query requests
@@ -91,10 +70,9 @@ public class TestServer
         {
             byte[] request = MessageBuilder.createQueryMessage(i + 1, i + 2);
             ByteBuffer requestByteBuffer = ByteBuffer.wrap(request);
-            ByteBuffer responseBuffer = ByteBuffer.allocate(1024);
+            ByteBuffer responseBuffer;
 
             client.write(requestByteBuffer);
-
 
             responseBuffer = ByteBuffer.allocate(1024);
             int bytesRead = client.read(responseBuffer);

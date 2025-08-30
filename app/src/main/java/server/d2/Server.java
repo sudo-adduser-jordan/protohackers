@@ -1,7 +1,11 @@
+
+
 package server.d2;
 
+import server.ChannelContext;
 import server.ServerLogFormatter;
 import server.ServerLogOptions;
+import server.SessionMemoryCache;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -11,8 +15,8 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
 import java.util.Iterator;
-import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -32,67 +36,71 @@ public class Server
         new Server().startServer(PORT);
     }
 
-    public static Selector createSelector() throws IOException
+    public static void acceptConnections(SelectionKey key) throws IOException
     {
-        logger.info("Server Selector created.");
-        return Selector.open();
+        try // to acceptConnections
+        {
+            if (!key.isValid())
+                return; // Skip invalid keys
+
+            if (key.isAcceptable()) handleAccept(key);
+            if (key.isReadable()) handleRead(key);
+            if (key.isValid()) if (key.isWritable()) handleWrite(key);
+        }
+        catch (Exception e)
+        {
+            logger.warning("Connection error: " + e.getMessage());
+            key.cancel();
+            key.channel()
+               .close();
+        }
     }
 
-    public static ServerSocketChannel createServerSocketChannel(int port, Selector selector) throws IOException
+    private static void handleAccept(SelectionKey key) throws Exception
     {
-        ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
-        serverSocketChannel.configureBlocking(false);
-        serverSocketChannel.socket()
-                           .bind(new InetSocketAddress(port));
-        serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-
-        logger.info("Server SocketChannel created for provider: " + selector.provider());
-        return serverSocketChannel;
+        ServerSocketChannel serverChannel = (ServerSocketChannel) key.channel();
+        SocketChannel clientChannel = serverChannel.accept();
+        clientChannel.configureBlocking(false);
+        clientChannel.register(key.selector(), SelectionKey.OP_READ, new ChannelContext(clientChannel));
+        logger.info("Client connected to channel: " + clientChannel.socket().getInetAddress());
     }
 
-    public static SocketChannel createClientSocketChannel(ServerSocketChannel serverSocketChannel) throws IOException
-    {
-        SocketChannel clientSocketChannel = serverSocketChannel.accept();
-        clientSocketChannel.configureBlocking(false);
-
-        logger.info("SocketChannel created for client:" + clientSocketChannel.getRemoteAddress());
-        return clientSocketChannel;
-    }
 
     // Hexadecimal: 00 00 13 f3
-    // Decoded: 5107 // intToBigEndianBytes
-    public static void writeChannel(SelectionKey key, Integer value) throws IOException
+    // Decoded: 5107 // send the byte
+    public static void handleWrite(SelectionKey key) throws IOException
     {
-        try (SocketChannel clientSocketChannel = (SocketChannel) key.channel())
-        {
-            ByteBuffer responseBuffer = ByteBuffer.allocate(RESPONSE_LENGTH);
-            responseBuffer.putInt(Objects.requireNonNullElse(value, 0));
-            responseBuffer.flip();
+        ChannelContext context = (ChannelContext) key.attachment();
+//
+//        String data = Charset.defaultCharset()
+//                             .decode(context.getWriteBuffer().flip())
+//                             .toString();
+        logger.info("Response: \t" + context.getWriteBuffer().flip().getInt());
 
-            logger.info("Response: \t | " + responseBuffer.getInt(0));
-            clientSocketChannel.write(responseBuffer);
-        }
+        context.getChannel().write(context.getWriteBuffer().flip());
+        context.getWriteBuffer().clear();
+        key.interestOps(SelectionKey.OP_READ);
     }
 
-    // Byte: | 0 | 1 2 3 4 | 5 6 7 8 |
-    // Type: |char | int32 | int32 | // @Builder pattern
-    public static Request readChannel(SelectionKey key) throws IOException
+    public static void handleRead(SelectionKey key) throws Exception
     {
-        SocketChannel clientSocketChannel = (SocketChannel) key.channel();
-        ByteBuffer responseByteBuffer = ByteBuffer.allocate(REQUEST_LENGTH);
-        Request.RequestBuilder builder = Request.builder();
+        ChannelContext context = (ChannelContext) key.attachment();
+        ByteBuffer readByteBuffer = context.getReadBuffer();
+        readByteBuffer.clear();
 
-        int bytesRead = clientSocketChannel.read(responseByteBuffer);
+        int bytesRead = context.getChannel().read(readByteBuffer);
         if (bytesRead == -1)
         {
-            clientSocketChannel.close();
+            context.getChannel()
+                   .close();
             key.cancel();
-            logger.warning("Connection closed by client: " + clientSocketChannel.socket()
-                                                                                .getInetAddress());
+            return;
         }
 
-        responseByteBuffer.flip();
-        byte[] responseByteArray = responseByteBuffer.array();
+        readByteBuffer.flip();
+
+        Request.RequestBuilder builder = Request.builder();
+        byte[] responseByteArray = readByteBuffer.array();
 
         int firstValue = ByteBuffer.wrap(responseByteArray, 1, 4)
                                    .order(ByteOrder.BIG_ENDIAN)
@@ -100,7 +108,6 @@ public class Server
         int secondValue = ByteBuffer.wrap(responseByteArray, 5, 4)
                                     .order(ByteOrder.BIG_ENDIAN)
                                     .getInt();
-
         switch (responseByteArray[0])
         {
             case INSERT_CHAR:
@@ -118,10 +125,31 @@ public class Server
                 break;
         }
 
-        return builder.FirstValue(firstValue)
-                      .SecondValue(secondValue)
-                      .build();
+        Request request = builder.FirstValue(firstValue)
+                                 .SecondValue(secondValue)
+                                 .build();
+
+        SessionMemoryCache sessionMemoryCache = context.getSessionMemoryCache();
+        context.getWriteBuffer().clear();
+
+        switch (request.getMessageType())
+        {
+            case INSERT ->
+            {
+                sessionMemoryCache.addPrice(request.getFirstValue(), request.getSecondValue());
+
+                context.getWriteBuffer().putInt(73);
+            }
+            case QUERY ->
+            {
+                int average = sessionMemoryCache.getAveragePriceInRange(request.getFirstValue(), request.getSecondValue());
+
+                context.getWriteBuffer().putInt(average);
+            }
+        }
+        key.interestOps(SelectionKey.OP_WRITE);
     }
+
 
     public static void stopServer(Selector selector, ServerSocketChannel serverSocketChannel)
     {
@@ -162,11 +190,21 @@ public class Server
     {
         try // to start the server
         {
-            Selector selector = createSelector();
-            ServerSocketChannel serverSocketChannel = createServerSocketChannel(port, selector);
+            logger.info("Starting server on port: " + port);
+
+            Selector selector = Selector.open();
+            logger.info("Selector created for server: " + selector.provider());
+
+            ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+            serverSocketChannel.configureBlocking(false);
+            serverSocketChannel.socket()
+                               .bind(new InetSocketAddress(port));
+            serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+            logger.info("ServerSocketChannel created for server: " + selector.provider());
 
             Runtime.getRuntime()
                    .addShutdownHook(new Thread(() -> stopServer(selector, serverSocketChannel)));
+            logger.info("Graceful shutdown hook created for server: " + selector.provider());
 
             while (isRunning)
             {
@@ -178,7 +216,7 @@ public class Server
                 {
                     SelectionKey key = iterator.next();
                     iterator.remove();
-                    acceptConnections(selector, key, serverSocketChannel);
+                    acceptConnections(key);
                 }
             }
         }
@@ -187,45 +225,4 @@ public class Server
             logger.warning("Error starting server on port:" + port);
         }
     }
-
-    public void acceptConnections(Selector selector, SelectionKey key, ServerSocketChannel serverSocketChannel) throws IOException
-    {
-        try // to acceptConnections
-        {
-            if (key.isAcceptable())
-            {
-                SocketChannel clientChannel = createClientSocketChannel(serverSocketChannel);
-                clientChannel.register(selector, SelectionKey.OP_READ, new SessionMemoryCache());
-                logger.info("Accepted connection from " + clientChannel.getRemoteAddress());
-            }
-
-            if (key.isReadable())
-            {
-                Request request = readChannel(key);
-                SessionMemoryCache sessionMemoryCache = (SessionMemoryCache) key.attachment();
-
-                switch (request.getMessageType())
-                {
-                    case INSERT ->
-                    {
-                        sessionMemoryCache.addPrice(request.getFirstValue(), request.getSecondValue());
-                        writeChannel(key, 73);
-                    }
-                    case QUERY ->
-                    {
-                        int average = sessionMemoryCache.getAveragePriceInRange(request.getFirstValue(), request.getSecondValue());
-                        writeChannel(key, average);
-                    }
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            key.cancel();
-            key.channel()
-               .close();
-            logger.warning("Connection error.");
-        }
-    }
-
 }

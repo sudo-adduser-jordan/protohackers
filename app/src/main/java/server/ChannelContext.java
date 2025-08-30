@@ -17,10 +17,12 @@ public class ChannelContext
     private final ByteBuffer readBuffer;
     private final ByteBuffer writeBuffer;
     private final StringBuilder messageBuffer;
+    private final SessionMemoryCache sessionMemoryCache;
     private final JsonMapper jsonMapper;
 
     public ChannelContext(SocketChannel channel) {
         this.channel = channel;
+        this.sessionMemoryCache = new SessionMemoryCache();
         this.readBuffer = ByteBuffer.allocate(1024);
         this.writeBuffer = ByteBuffer.allocate(1024);
         this.messageBuffer = new StringBuilder();
