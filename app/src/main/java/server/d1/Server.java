@@ -86,7 +86,7 @@ public class Server
                 }
                 catch (Exception e)
                 {
-                    writeChannel(key, request);
+                    writeChannel(key, Objects.requireNonNull(request));
                 }
             }
         }
@@ -110,14 +110,16 @@ public class Server
 
     public static void writeChannel(SelectionKey key, String message) throws IOException
     {
-        SocketChannel clientSocketChannel = (SocketChannel) key.channel();
-        ByteBuffer responseBuffer = ByteBuffer.wrap(message.getBytes());
-        while (responseBuffer.hasRemaining())
+        try (SocketChannel clientSocketChannel = (SocketChannel) key.channel())
         {
-            clientSocketChannel.write(responseBuffer);
+            ByteBuffer responseBuffer = ByteBuffer.wrap(message.getBytes());
+            while (responseBuffer.hasRemaining())
+            {
+                clientSocketChannel.write(responseBuffer);
+            }
+            responseBuffer.flip();
+            logger.info("Response:\t" + message);
         }
-        responseBuffer.flip();
-        logger.info("Response:\t" + message);
     }
 
     public static String readChannel(SelectionKey key) throws IOException
@@ -182,7 +184,6 @@ public class Server
         catch (IOException e)
         {
             System.out.println("Error during shutdown: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -194,10 +195,7 @@ public class Server
             ServerSocketChannel serverSocketChannel = createServerSocketChannel(port, selector);
 
             Runtime.getRuntime()
-                   .addShutdownHook(new Thread(() ->
-                   {
-                       stopServer(selector, serverSocketChannel);
-                   }));
+                   .addShutdownHook(new Thread(() -> stopServer(selector, serverSocketChannel)));
 
             while (isRunning)
             {
@@ -216,7 +214,6 @@ public class Server
         catch (Exception e)
         {
             logger.warning("Error starting server on port:" + port);
-            e.printStackTrace();
         }
     }
 

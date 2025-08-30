@@ -12,6 +12,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -62,23 +63,15 @@ public class Server
     // Decoded: 5107 // intToBigEndianBytes
     public static void writeChannel(SelectionKey key, Integer value) throws IOException
     {
-        SocketChannel clientSocketChannel = (SocketChannel) key.channel();
-        ByteBuffer responseBuffer = ByteBuffer.allocate(RESPONSE_LENGTH);
-
-        if (value == null)
+        try (SocketChannel clientSocketChannel = (SocketChannel) key.channel())
         {
-            responseBuffer.putInt(0);
+            ByteBuffer responseBuffer = ByteBuffer.allocate(RESPONSE_LENGTH);
+            responseBuffer.putInt(Objects.requireNonNullElse(value, 0));
+            responseBuffer.flip();
+
+            logger.info("Response: \t | " + responseBuffer.getInt(0));
+            clientSocketChannel.write(responseBuffer);
         }
-        else
-        {
-            responseBuffer.putInt(value);
-        }
-
-        responseBuffer.flip();
-
-        logger.info("Response: \t | " + responseBuffer.getInt(0));
-        clientSocketChannel.write(responseBuffer);
-
     }
 
     // Byte: | 0 | 1 2 3 4 | 5 6 7 8 |
@@ -162,7 +155,6 @@ public class Server
         catch (IOException e)
         {
             System.out.println("Error during shutdown: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -174,10 +166,7 @@ public class Server
             ServerSocketChannel serverSocketChannel = createServerSocketChannel(port, selector);
 
             Runtime.getRuntime()
-                   .addShutdownHook(new Thread(() ->
-                   {
-                       stopServer(selector, serverSocketChannel);
-                   }));
+                   .addShutdownHook(new Thread(() -> stopServer(selector, serverSocketChannel)));
 
             while (isRunning)
             {
@@ -196,7 +185,6 @@ public class Server
         catch (Exception e)
         {
             logger.warning("Error starting server on port:" + port);
-            e.printStackTrace();
         }
     }
 
@@ -237,7 +225,6 @@ public class Server
             key.channel()
                .close();
             logger.warning("Connection error.");
-            e.printStackTrace();
         }
     }
 

@@ -12,7 +12,7 @@ enum MessageTypes
 // Type:  |char |         int32         |         int32         |
 @Getter
 @Builder
-class Request
+public  class Request
 {
     private final MessageTypes MessageType;
     private final int FirstValue; // 32

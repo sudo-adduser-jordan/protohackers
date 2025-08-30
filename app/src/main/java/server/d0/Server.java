@@ -1,5 +1,6 @@
 package server.d0;
 
+import server.ChannelContext;
 import server.ServerLogFormatter;
 
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -42,63 +44,90 @@ public class Server
         return serverSocketChannel;
     }
 
-    public static void acceptConnections(Selector selector, SelectionKey key, ServerSocketChannel serverSocketChannel) throws IOException
+    public static void acceptConnections(SelectionKey key) throws IOException
     {
-        try // to acceptConnections
+        if (!key.isValid())
         {
-            if (key.isAcceptable())
+            try // to acceptConnections
             {
-                SocketChannel clientChannel = createClientSocketChannel(serverSocketChannel);
-                clientChannel.register(selector, SelectionKey.OP_READ, ByteBuffer.allocate(1024));
-                logger.info("Accepted connection from " + clientChannel.getRemoteAddress());
+                if (key.isAcceptable()) handleAccept(key);
+                if (key.isReadable()) handleRead(key);
+                if (key.isWritable()) handleWrite(key);
             }
+            catch (Exception e)
+            {
+                logger.warning("Connection error: " + e.getMessage());
+                key.cancel();
+                key.channel()
+                   .close();
+                e.printStackTrace();
+            }
+        }
+    }
 
-            if (key.isReadable())
+
+    private static void handleAccept(SelectionKey key) throws Exception
+    {
+        ServerSocketChannel serverChannel = (ServerSocketChannel) key.channel();
+        SocketChannel clientChannel = serverChannel.accept();
+        clientChannel.configureBlocking(false);
+        clientChannel.register(key.selector(), SelectionKey.OP_READ, new ChannelContext(clientChannel));
+    }
+
+    public static void handleWrite(SelectionKey key) throws IOException
+    {
+        ChannelContext context = (ChannelContext) key.attachment();
+        ByteBuffer writeByteBuffer = context.getWriteBuffer();
+        if (writeByteBuffer.hasRemaining())
+        {
+            context.getChannel()
+                   .write(writeByteBuffer);
+        }
+        if (!writeByteBuffer.hasRemaining())
+        {
+            writeByteBuffer.clear();
+            key.interestOps(SelectionKey.OP_READ);
+        }
+    }
+
+    public static void handleRead(SelectionKey key)
+    {
+        try
+        {
+
+            ChannelContext context = (ChannelContext) key.attachment();
+            ByteBuffer readByteBuffer = context.getReadBuffer();
+            readByteBuffer.clear();
+
+            int bytesRead = context.getChannel()
+                                   .read(readByteBuffer);
+            if (bytesRead == -1)
             {
-                readChannel(key);
+                context.getChannel()
+                       .close();
+////                key.cancel();
+                return;
             }
+            readByteBuffer.flip();
+
+            String data = Charset.defaultCharset()
+                                 .decode(readByteBuffer)
+                                 .toString();
+
+            context.getWriteBuffer()
+                   .put(data.getBytes());
+
+            context.getWriteBuffer()
+                   .flip();
+
+            key.interestOps(SelectionKey.OP_WRITE);
         }
         catch (Exception e)
         {
-            logger.warning("Connection error: " + e.getMessage());
-            key.cancel();
-            key.channel()
-               .close();
+            logger.warning("Read failed for channel: " + e.getMessage());
         }
     }
 
-    public static SocketChannel createClientSocketChannel(ServerSocketChannel serverSocketChannel) throws IOException
-    {
-        SocketChannel clientSocketChannel = serverSocketChannel.accept();
-        clientSocketChannel.configureBlocking(false);
-
-        logger.info("SocketChannel created for client:" + clientSocketChannel.getRemoteAddress());
-        return clientSocketChannel;
-    }
-
-    public static void writeChannel(SocketChannel clientSocketChannel, ByteBuffer responseByteBuffer) throws IOException
-    {
-        while (responseByteBuffer.hasRemaining())
-        {
-            clientSocketChannel.write(responseByteBuffer);
-        }
-    }
-
-    public static void readChannel(SelectionKey key) throws IOException
-    {
-        SocketChannel clientSocketChannel = (SocketChannel) key.channel();
-        ByteBuffer buffer = ByteBuffer.allocate(1024);
-
-        int bytesRead = clientSocketChannel.read(buffer);
-        if (bytesRead == -1)
-        {
-            clientSocketChannel.close();
-            key.cancel();
-            return;
-        }
-        buffer.flip();
-        writeChannel(clientSocketChannel, buffer);
-    }
 
     public static void stopServer(Selector selector, ServerSocketChannel serverSocketChannel)
     {
@@ -155,7 +184,7 @@ public class Server
                 {
                     SelectionKey key = iterator.next();
                     iterator.remove();
-                    acceptConnections(selector, key, serverSocketChannel);
+                    acceptConnections(key);
                 }
             }
         }
