@@ -74,7 +74,7 @@ public class Server
                              .toString();
         logger.info("Response: \t" + data);
 
-        context.getChannel().write(context.getWriteBuffer().flip());
+        context.getChannel().write(context.getWriteBuffer());
         context.getWriteBuffer().clear();
         key.interestOps(SelectionKey.OP_READ);
     }
