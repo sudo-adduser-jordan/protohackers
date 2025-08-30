@@ -128,7 +128,7 @@ public class Server
 
         buffer.flip();
         String message = new String(buffer.array(), 0, buffer.limit());
-        logger.info("Request: \t" + message);
+//        logger.info("Request: \t" + message);
 
         writeChannel(clientSocketChannel, message);
         buffer.clear();
