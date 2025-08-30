@@ -55,9 +55,9 @@ public class JSONRequests
     public static String[] getInvalidJSONRequests()
     {
         return new String[]{invalidJSONMissingColon, invalidJSONTrailingComma, invalidJSONUnclosedBrace, invalidJSONExtraComma, invalidJSONMissingQuotes, invalidJSONWrongQuotes, invalidJSONEmptyObject,
-                // invalidJSONEmptyArray,
+                 invalidJSONEmptyArray,
                 invalidJSONNumberAsString,
-                // invalidJSONExtraField,
+//                 invalidJSONExtraField,
                 invalidJSONMissingMethod, invalidJSONMissingNumber, invalidJSONIncorrectType, invalidJSONArrayInsteadOfObject, invalidJSONNestedMalformed};
     }
 
