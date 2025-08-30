@@ -84,7 +84,10 @@ public class Server
                 logger.info("Accepted connection from " + clientChannel.getRemoteAddress());
             }
 
-            if (key.isReadable()) readChannel(key);
+            if (key.isReadable()) {
+                readChannel(key);
+                key.channel().close();
+            };
         }
         catch (Exception e)
         {
