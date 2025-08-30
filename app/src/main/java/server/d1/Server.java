@@ -68,15 +68,18 @@ public class Server
     public static void handleWrite(SelectionKey key) throws IOException
     {
         ChannelContext context = (ChannelContext) key.attachment();
+        ByteBuffer writeBuffer = context.getWriteBuffer();
+        SocketChannel clientChannel = context.getChannel();
+
 
         String data = Charset.defaultCharset()
-                             .decode(context.getWriteBuffer().flip())
+                             .decode(writeBuffer)
                              .toString();
-        logger.info("Response: \t" + data);
+        logger.info("Response:\t" + data);
 
-        context.getWriteBuffer().clear();
-        context.getChannel().write(context.getWriteBuffer().flip());
-//        context.getChannel().write(context.getWriteBuffer().putChar('\n').flip());
+
+        clientChannel.write(writeBuffer);
+        writeBuffer.clear();
         key.interestOps(SelectionKey.OP_READ);
     }
 
@@ -84,8 +87,7 @@ public class Server
     public static void handleRead(SelectionKey key) throws Exception
     {
         ChannelContext context = (ChannelContext) key.attachment();
-        ByteBuffer readByteBuffer = context.getReadBuffer();
-        readByteBuffer.clear();
+        ByteBuffer readByteBuffer = context.getReadBuffer().clear();
 
         int bytesRead = context.getChannel().read(readByteBuffer);
         if (bytesRead == -1)
@@ -99,7 +101,7 @@ public class Server
         readByteBuffer.flip();
         String data = Charset.defaultCharset()
                              .decode(readByteBuffer)
-                             .toString();
+                             .toString().trim();
         logger.info("Request: \t" + data);
 
         try
@@ -114,15 +116,18 @@ public class Server
             boolean isPrime = isPrimeDouble(requestJSON.getNumber());
             ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrime);
 
-            context.getWriteBuffer().clear();
             context.getWriteBuffer().put(context.getJsonMapper().writeValueAsBytes(responseJSON));
         }
         catch (Exception e)
         {
             logger.warning("Invalid json: " + data);
-            context.getWriteBuffer().clear();
-            context.getWriteBuffer().put(readByteBuffer.flip());
+            context.getChannel().write(context.getWriteBuffer().put((data + "\n").getBytes()).flip());
+            context.getChannel().close();
+            key.channel().close();
+//            context.getWriteBuffer().put(data.getBytes()).flip();
+//            context.getChannel().socket().close(); write then close
         }
+
         key.interestOps(SelectionKey.OP_WRITE);
     }
 

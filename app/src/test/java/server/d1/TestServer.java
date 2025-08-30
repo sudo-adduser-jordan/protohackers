@@ -78,7 +78,7 @@ class TestServer
             readBuffer.get(bytes);
             String response = new String(bytes);
 
-            Assertions.assertEquals(response, message, "Response did not match request: " + message);
+            Assertions.assertEquals(message, response, "Response did not match request: " + message);
         }
     }
 
