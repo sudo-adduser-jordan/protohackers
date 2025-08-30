@@ -58,6 +58,13 @@ public class Server
     public static void handleWrite(SelectionKey key) throws IOException
     {
         ChannelContext context = (ChannelContext) key.attachment();
+
+
+        String data = Charset.defaultCharset()
+                             .decode(context.getWriteBuffer().flip())
+                             .toString();
+        logger.info("Response: \t" + data);
+
         context.getChannel().write(context.getWriteBuffer().flip());
         context.getWriteBuffer().clear();
         key.interestOps(SelectionKey.OP_READ);
@@ -78,11 +85,12 @@ public class Server
             return;
         }
 
-//        readByteBuffer.flip();
-//        String data = Charset.defaultCharset()
-//                             .decode(readByteBuffer)
-//                             .toString();
-//        logger.info("Request: \t" + data);
+        readByteBuffer.flip();
+        String data = Charset.defaultCharset()
+                             .decode(readByteBuffer)
+                             .toString();
+        logger.info("Request: \t" + data);
+//        readByteBuffer.rewind();
 
         context.getWriteBuffer().clear();
         context.getWriteBuffer().put(readByteBuffer.flip());
