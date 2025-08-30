@@ -130,20 +130,18 @@ public class Server
                                  .build();
 
         SessionMemoryCache sessionMemoryCache = context.getSessionMemoryCache();
-        context.getWriteBuffer().clear();
 
+        context.getWriteBuffer().clear();
         switch (request.getMessageType())
         {
             case INSERT ->
             {
                 sessionMemoryCache.addPrice(request.getFirstValue(), request.getSecondValue());
-
                 context.getWriteBuffer().putInt(73);
             }
             case QUERY ->
             {
                 int average = sessionMemoryCache.getAveragePriceInRange(request.getFirstValue(), request.getSecondValue());
-
                 context.getWriteBuffer().putInt(average);
             }
         }
