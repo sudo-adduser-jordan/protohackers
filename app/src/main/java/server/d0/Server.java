@@ -106,22 +106,25 @@ public class Server
         return clientSocketChannel;
     }
 
-    public static void writeChannel(SocketChannel clientSocketChannel, ByteBuffer responseByteBuffer) throws IOException
-    {
-
-        clientSocketChannel.write(responseByteBuffer);
-//         logger.info("Response:\t" + message);
+    public static void writeChannel(SocketChannel clientSocketChannel, ByteBuffer responseByteBuffer) throws IOException {
+        while (responseByteBuffer.hasRemaining())
+        {
+            clientSocketChannel.write(responseByteBuffer);
+        }
     }
 
-    public static void readChannel(SelectionKey key) throws IOException
-    {
+    public static void readChannel(SelectionKey key) throws IOException {
         SocketChannel clientSocketChannel = (SocketChannel) key.channel();
         ByteBuffer buffer = ByteBuffer.allocate(1024);
 
-        while (clientSocketChannel.read(buffer) != -1)
-        {
-            writeChannel(clientSocketChannel, buffer);
+        int bytesRead = clientSocketChannel.read(buffer);
+        if (bytesRead == -1) {
+            clientSocketChannel.close();
+            key.cancel();
+            return;
         }
+        buffer.flip();
+        writeChannel(clientSocketChannel, buffer);
     }
 
     public static void stopServer(Selector selector, ServerSocketChannel serverSocketChannel)
