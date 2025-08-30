@@ -6,7 +6,6 @@ java solutions and tests for protohackers
 
 ```sh
 curl -s "https://get.sdkman.io" | bash
-curl -s "https://get.sdkman.io" | bash
 source "/root/.sdkman/bin/sdkman-init.sh"
 sdk install java 21.0.2-graalce
 sdk install gradle 9.0.0
