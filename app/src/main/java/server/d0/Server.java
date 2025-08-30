@@ -67,7 +67,7 @@ public class Server
             String data = Charset.defaultCharset()
                                  .decode(writeByteBuffer)
                                  .toString();
-            logger.info("Response: \t" + data);
+//            logger.info("Response: \t" + data);
 
             writeByteBuffer.clear();
             key.interestOps(SelectionKey.OP_READ);
@@ -96,7 +96,7 @@ public class Server
             String data = Charset.defaultCharset()
                                  .decode(readByteBuffer)
                                  .toString();
-            logger.info("Request: \t" + data);
+//            logger.info("Request: \t" + data);
 
             context.getWriteBuffer()
                    .put(data.getBytes());
