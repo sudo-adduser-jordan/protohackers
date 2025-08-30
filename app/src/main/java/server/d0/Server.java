@@ -114,7 +114,7 @@ public class Server
         while (responseBuffer.hasRemaining()) {
             clientSocketChannel.write(responseBuffer);
         }
-        logger.info("Response:\t" + message);
+        // logger.info("Response:\t" + message);
     }
 
     public static void readChannel(SelectionKey key) throws IOException
