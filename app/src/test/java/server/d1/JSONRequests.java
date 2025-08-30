@@ -4,9 +4,10 @@ public class JSONRequests
 {
     // Valid JSON string
     public static final String validJSON = """
-            {"method": "isPrime", "number": 123}""";
+            {"method": "isPrime", "number": 123}
+            """;
 
-    public static final String validJSONResponse = "{\"method\":\"isPrime\",\"prime\":false}";
+    public static final String validJSONResponse = "{\"method\":\"isPrime\",\"prime\":false}\n";
 
     // Invalid JSON strings
     public static final String invalidJSONMissingColon = """

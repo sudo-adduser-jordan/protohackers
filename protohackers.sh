@@ -31,3 +31,5 @@ gradle ~/protohackers d2
 # git checkout 970df26b9dcfb0fbac74c266a5915fdbb3a24cb3 # solution 0
 # git checkout 970df26b9dcfb0fbac74c266a5915fdbb3a24cb3 # solution 1
 
+
+#pkill -f 'gradle'

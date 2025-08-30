@@ -74,8 +74,8 @@ public class Server
                              .toString();
         logger.info("Response: \t" + data);
 
-        context.getChannel().write(context.getWriteBuffer().flip());
         context.getWriteBuffer().clear();
+        context.getChannel().write(context.getWriteBuffer().putChar('\n').flip());
         key.interestOps(SelectionKey.OP_READ);
     }
 
@@ -106,7 +106,6 @@ public class Server
             RequestJSON requestJSON = context.getJsonMapper().readValue(data, RequestJSON.class);
             logger.info(requestJSON.toString());
 
-
             if (!Objects.equals(requestJSON.getMethod(), "isPrime"))
             {
                 throw new Exception("method does not equal 'isPrime'");
@@ -116,17 +115,14 @@ public class Server
 
             context.getWriteBuffer().clear();
             context.getWriteBuffer().put(context.getJsonMapper().writeValueAsBytes(responseJSON));
-            key.interestOps(SelectionKey.OP_WRITE);
-
         }
         catch (Exception e)
         {
             logger.warning("Invalid json: " + data);
             context.getWriteBuffer().clear();
             context.getWriteBuffer().put(readByteBuffer.flip());
-            key.interestOps(SelectionKey.OP_WRITE);
         }
-
+        key.interestOps(SelectionKey.OP_WRITE);
     }
 
 

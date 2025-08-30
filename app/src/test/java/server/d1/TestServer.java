@@ -40,7 +40,7 @@ class TestServer
     {
         SocketChannel client = SocketChannel.open();
         client.connect(new InetSocketAddress("localhost", TEST_PORT));
-         client.configureBlocking(true);
+         client.configureBlocking(false);
 
         String message = JSONRequests.validJSON;
         ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
