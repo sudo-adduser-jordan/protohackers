@@ -122,8 +122,10 @@ public class Server
         {
             logger.warning("Invalid json: " + data);
             context.getChannel().write(context.getWriteBuffer().put((data + "\n").getBytes()).flip());
+            context.getChannel().close();
+            key.channel().close();
+            return;
 //            context.getWriteBuffer().put(data.getBytes()).flip();
-//            context.getChannel().socket().close(); write then close
         }
 
         key.interestOps(SelectionKey.OP_WRITE);
