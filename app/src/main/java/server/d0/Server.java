@@ -108,7 +108,8 @@ public class Server
         }
         catch (Exception e)
         {
-            logger.warning("Read failed for channel: " + e.getMessage());
+            logger.warning("Read failed for channel: " );
+            e.printStackTrace();
         }
     }
 
