@@ -5,10 +5,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.RepeatedTest;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
 
 class TestServer
 {
@@ -36,70 +36,64 @@ class TestServer
     }
 
     @RepeatedTest(CLIENT_COUNT)
-    public void testValidJSONRequests() throws IOException
+    public void testValidJSONRequests()
     {
         for (int index = 0; index < 5; index++)
         {
-            try
+            try (SocketChannel clientSocketChannel = SocketChannel.open())
             {
-            SocketChannel clientSocketChannel = SocketChannel.open();
+                clientSocketChannel.connect(new InetSocketAddress("localhost", TEST_PORT));
+                ByteBuffer readBuffer = ByteBuffer.allocate(1024);
 
-            clientSocketChannel.connect(new InetSocketAddress("localhost", TEST_PORT));
-            ByteBuffer readBuffer = ByteBuffer.allocate(1024);
+                // without \n stay open
+                clientSocketChannel.write(ByteBuffer.wrap(JSONRequests.validJSON.getBytes()));
+                if (clientSocketChannel.read(readBuffer) == -1)
+                {
+                    System.out.println("read error");
+                }
+                String response = Charset.defaultCharset().decode(readBuffer.flip()).toString();
 
+                Assertions.assertEquals(JSONRequests.validJSONResponse, response, "Response did not match request");
 
-            // without \n stay open
-            clientSocketChannel.write(ByteBuffer.wrap(JSONRequests.validJSON.getBytes()));
-            int bytesRead = clientSocketChannel.read(readBuffer);
-//            System.out.println(index);
-            readBuffer.flip();
-
-            byte[] bytes = new byte[bytesRead];
-            readBuffer.get(bytes);
-            String response = new String(bytes);
-
-            Assertions.assertEquals(JSONRequests.validJSONResponse+'\n', response, "Response did not match request");
-
-            // with \n close
-            clientSocketChannel.write(ByteBuffer.wrap(JSONRequests.validJSON.getBytes()));
-            bytesRead = clientSocketChannel.read(readBuffer);
-            System.out.println(bytesRead);
-
-            bytes = new byte[bytesRead];
-            readBuffer.flip().get(bytes);
-            response = new String(bytes);
-
-            Assertions.assertEquals(JSONRequests.validJSONResponse, response, "Response did not match request");
-//            Assertions.assertFalse(clientSocketChannel.isOpen());
-
-        }catch (Exception e) {
-            System.out.println("client connection failure");
+                // with \n close
+                readBuffer.clear();
+                clientSocketChannel.write(ByteBuffer.wrap((JSONRequests.validJSON + '\n').getBytes()));
+                if (clientSocketChannel.read(readBuffer) != -1)
+                {
+                    response = Charset.defaultCharset().decode(readBuffer.flip()).toString();
+                    Assertions.assertEquals(JSONRequests.validJSONResponse + '\n', response, "Response did not match request");
+                }
+            }
+            catch (Exception e)
+            {
+                System.out.println("client connection failure");
             }
         }
 
     }
-//
-//    @RepeatedTest(CLIENT_COUNT)
-//    public void testInvalidJSONRequests() throws IOException
-//    {
-//        for (String message : JSONRequests.getInvalidJSONRequests())
-//        {
-//            SocketChannel clientSocketChannel = SocketChannel.open();
-//            clientSocketChannel.connect(new InetSocketAddress("localhost", TEST_PORT));
-//
-//            ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
-//            clientSocketChannel.write(buffer);
-//
-//            ByteBuffer readBuffer = ByteBuffer.allocate(1024);
-//            int bytesRead = clientSocketChannel.read(readBuffer);
-//            readBuffer.flip();
-//
-//            byte[] bytes = new byte[bytesRead];
-//            readBuffer.get(bytes);
-//            String response = new String(bytes);
-//
-//            Assertions.assertEquals(message, response, "Response did not match request: " + message);
-//        }
-//    }
+
+    @RepeatedTest(CLIENT_COUNT)
+    public void testInvalidJSONRequests()
+    {
+        for (String message : JSONRequests.getInvalidJSONRequests())
+        {
+            try (SocketChannel clientSocketChannel = SocketChannel.open())
+            {
+                clientSocketChannel.connect(new InetSocketAddress("localhost", TEST_PORT));
+                clientSocketChannel.write(ByteBuffer.wrap(message.getBytes()));
+
+                ByteBuffer readBuffer = ByteBuffer.allocate(1024);
+                if (clientSocketChannel.read(readBuffer) != -1)
+                {
+                    String response = Charset.defaultCharset().decode(readBuffer.flip()).toString();
+                    Assertions.assertEquals(message + '\n', response, "Response did not match request: " + message);
+                }
+            }
+            catch (Exception e)
+            {
+                System.out.println("client connection failure");
+            }
+        }
+    }
 
 }

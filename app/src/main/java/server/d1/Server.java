@@ -7,6 +7,7 @@ import server.ServerLogOptions;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -74,10 +75,11 @@ public class Server
         ChannelContext context = (ChannelContext) key.attachment();
         try
         {
-            logger.warning("Client disconnected: " + context.getChannel().toString());
-            context.getChannel()
-                   .close();
+            context.getChannel().socket().close();
+            context.getChannel().close();
+            key.channel().close();
             key.cancel();
+            logger.warning("Client disconnected: " + context.getChannel().toString());
         }
         catch (Exception e)
         {
@@ -107,17 +109,16 @@ public class Server
     public static void handleWrite(SelectionKey key) throws IOException
     {
         ChannelContext context = (ChannelContext) key.attachment();
+        String response = Charset.defaultCharset().decode(context.getWriteBuffer().flip()).toString() + '\n';
+        logger.info("Response:\t" + response);
 
         if (context.getMessageBuffer().toString().equals("close"))
         {
-            logger.info("Response:\t" + Charset.defaultCharset().decode(context.getWriteBuffer().flip()));
-//            context.getChannel().write(context.getWriteBuffer().flip().putChar('\n'));
-            context.getChannel().write(context.getWriteBuffer().flip());
+            context.getChannel().write(ByteBuffer.wrap(response.getBytes()));
             closeChannel(key);
         }
         else
         {
-            logger.info("Response:\t" + Charset.defaultCharset().decode(context.getWriteBuffer().flip()));
             context.getChannel().write(context.getWriteBuffer().flip());
         }
 
@@ -130,11 +131,15 @@ public class Server
     {
         ChannelContext context = (ChannelContext) key.attachment();
         context.getReadBuffer().clear();
+
+
         if (context.getChannel().read(context.getReadBuffer()) != -1)
         {
-            logger.info("Request: \t" + Charset.defaultCharset().decode(context.getReadBuffer().flip()));
+            String requestString = Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString();
 
-            if (Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString().contains("\n"))
+            logger.info("Request: \t" + requestString);
+
+            if (requestString.contains("\n"))
             {
                 context.getMessageBuffer().setLength(0);
                 context.getMessageBuffer().append("close");
@@ -143,19 +148,20 @@ public class Server
             try
             {
                 RequestJSON requestJSON = context.getJsonMapper()
-                                                 .readValue(Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString(), RequestJSON.class);
+                                                 .readValue(Charset.defaultCharset()
+                                                                   .decode(context.getReadBuffer().flip())
+                                                                   .toString(), RequestJSON.class);
                 ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
 
-
-//                String responseString = context.getJsonMapper().writeValueAsString(responseJSON) + '\n';
-//                String responseString = context.getJsonMapper().writeValueAsString(responseJSON).strip();
                 String responseString = context.getJsonMapper().writeValueAsString(responseJSON);
                 context.getWriteBuffer().put(responseString.getBytes());
                 key.interestOps(SelectionKey.OP_WRITE);
             }
             catch (Exception e)
             {
-                context.getWriteBuffer().put(context.getReadBuffer());
+                context.getMessageBuffer().setLength(0);
+                context.getMessageBuffer().append("close");
+                context.getWriteBuffer().put(requestString.getBytes());
                 key.interestOps(SelectionKey.OP_WRITE);
             }
 
