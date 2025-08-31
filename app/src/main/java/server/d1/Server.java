@@ -125,18 +125,17 @@ public class Server
         context.getReadBuffer().clear();
 
         // if data
-        int requestLength = context.getChannel().read(context.getReadBuffer());
-        if (requestLength > 100) {
-            closeChannel(key);
-            return;
-        }
+//        int requestLength = context.getChannel().read(context.getReadBuffer());
 
 
-
-
-        if (-1 !=  requestLength)
+        if (-1 != context.getChannel().read(context.getReadBuffer()))
         {
             String requestString = Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString();
+            if (requestString.length() > 100)
+            {
+                closeChannel(key);
+                return;
+            }
 
 
             logger.debug("Request: \t" + requestString);
