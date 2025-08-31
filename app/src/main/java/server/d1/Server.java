@@ -126,26 +126,12 @@ public class Server
 
         if ( -1 != context.getChannel().read(context.getReadBuffer()))
         {
-            String requestString = Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString().trim();
-
-
+            String requestString = Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString();
 
             logger.debug("Request: \t" + requestString);
 
             try // if valid json
             {
-
-
-//                if (requestString.length() > 100)
-//                {
-//                System.out.println(requestString.length());
-////                    context.getWriteBuffer().put(requestString.getBytes());
-//                    throw new Exception("sjflsjfs");
-//                }
-
-
-
-
 
                 RequestJSON requestJSON = context.getJsonMapper()
                                                  .readValue(requestString, RequestJSON.class);
