@@ -162,7 +162,8 @@ public class Server
             key.interestOps(SelectionKey.OP_WRITE);
             closeChannel(key);
         }
-        if (0 < bytesRead)
+        else 
+//        if (0 < bytesRead)
         {
 
             RequestJSON requestJSON = parseRequestJSON(requestString, context.getJsonMapper());
