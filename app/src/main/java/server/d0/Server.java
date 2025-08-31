@@ -2,6 +2,7 @@ package server.d0;
 
 import server.ChannelContext;
 import server.ServerLogFormatter;
+import server.ServerLogOptions;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -18,7 +19,8 @@ import java.util.logging.Logger;
 public class Server
 {
     public static final int PORT = 42069;
-    private static final Logger logger = ServerLogFormatter.getLogger(Server.class);
+    private static final Logger log = ServerLogFormatter.getLogger(server.d1.Server.class);
+    private static final ServerLogOptions logger = new ServerLogOptions(log);
     volatile static boolean isRunning = true;
 
     public static void main(String[] args)
@@ -30,12 +32,21 @@ public class Server
     {
         try // to acceptConnections
         {
-            if (!key.isValid())
-                return; // Skip invalid keys
-
-            if (key.isAcceptable()) handleAccept(key);
-            if (key.isReadable()) handleRead(key);
-            if (key.isValid()) if (key.isWritable()) handleWrite(key);
+            if (key.isValid())
+            {
+                if (key.isAcceptable())
+                {
+                    handleAccept(key);
+                }
+                if (key.isReadable())
+                {
+                    handleRead(key);
+                }
+                if (key.isWritable())
+                {
+                    handleWrite(key);
+                }
+            }
         }
         catch (Exception e)
         {
@@ -46,27 +57,52 @@ public class Server
         }
     }
 
-    private static void handleAccept(SelectionKey key) throws Exception
+
+    private static void handleAccept(SelectionKey key)
     {
-        ServerSocketChannel serverChannel = (ServerSocketChannel) key.channel();
-        SocketChannel clientChannel = serverChannel.accept();
-        clientChannel.configureBlocking(false);
-        clientChannel.register(key.selector(), SelectionKey.OP_READ, new ChannelContext(clientChannel));
-        logger.info("Client connected to channel: " + clientChannel.socket().getInetAddress());
+        ServerSocketChannel serverChannel;
+        try
+        {
+            serverChannel = (ServerSocketChannel) key.channel();
+            SocketChannel clientChannel = serverChannel.accept();
+            clientChannel.configureBlocking(false);
+            clientChannel.register(key.selector(), SelectionKey.OP_READ, new ChannelContext(clientChannel));
+            logger.info("Client connected to channel: " + clientChannel.socket().getInetAddress());
+        }
+        catch (Exception e)
+        {
+            logger.error("Error connecting client to server channel: " + e.getMessage());
+            key.cancel();
+        }
     }
+
+    private static void closeChannel(SelectionKey key)
+    {
+        ChannelContext context = (ChannelContext) key.attachment();
+        try
+        {
+            context.getChannel().socket().close();
+            context.getChannel().close();
+            key.channel().close();
+            key.cancel();
+            logger.warning("Client disconnected: " + context.getChannel().toString());
+        }
+        catch (Exception e)
+        {
+            logger.error(" " + e.getMessage());
+        }
+    }
+
 
     public static void handleWrite(SelectionKey key) throws IOException
     {
         ChannelContext context = (ChannelContext) key.attachment();
-
-
         String data = Charset.defaultCharset()
                              .decode(context.getWriteBuffer().flip())
                              .toString();
         logger.info("Response: \t" + data);
 
         context.getChannel().write(context.getWriteBuffer().flip());
-        context.getWriteBuffer().clear();
         key.interestOps(SelectionKey.OP_READ);
     }
 
@@ -74,27 +110,22 @@ public class Server
     {
         ChannelContext context = (ChannelContext) key.attachment();
         ByteBuffer readByteBuffer = context.getReadBuffer();
+        context.getWriteBuffer().clear();
         readByteBuffer.clear();
 
         int bytesRead = context.getChannel().read(readByteBuffer);
         if (bytesRead == -1)
         {
-            context.getChannel()
-                   .close();
-            key.cancel();
-            return;
-        }
-
-        readByteBuffer.flip();
+            closeChannel(key);
+        } else {
         String data = Charset.defaultCharset()
-                             .decode(readByteBuffer)
+                             .decode(readByteBuffer.flip())
                              .toString();
         logger.info("Request: \t" + data);
 
-        context.getWriteBuffer().clear();
         context.getWriteBuffer().put(readByteBuffer.flip());
-
         key.interestOps(SelectionKey.OP_WRITE);
+        }
     }
 
 
@@ -135,14 +166,16 @@ public class Server
 
     public void startServer(int port)
     {
-        try // to start the server
+        // to start the server
+        try (
+                ServerSocketChannel serverSocketChannel = ServerSocketChannel.open()
+        )
         {
             logger.info("Starting server on port: " + port);
 
             Selector selector = Selector.open();
             logger.info("Selector created for server: " + selector.provider());
 
-            ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(false);
             serverSocketChannel.socket()
                                .bind(new InetSocketAddress(port));
@@ -172,5 +205,4 @@ public class Server
             logger.warning("Error starting server on port:" + port);
         }
     }
-
 }
