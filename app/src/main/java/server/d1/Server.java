@@ -168,7 +168,8 @@ public class Server
             key.interestOps(SelectionKey.OP_WRITE);
             closeChannel(key);
         }
-        if (null != requestJSON)
+        else 
+//        if (null != requestJSON)
         {
 
 
