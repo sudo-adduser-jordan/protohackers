@@ -9,14 +9,15 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
 import java.util.Random;
 
 public class TestServer
 {
 
     private static final int TEST_PORT = 6969;
-    private static Thread serverThread;
     private static final int REQUESTS_PER_CLIENT = 10;
+    private static Thread serverThread;
     private final int CLIENT_COUNT = 5;
 
     @BeforeAll
@@ -59,16 +60,14 @@ public class TestServer
             for (int i = 0; i < REQUESTS_PER_CLIENT; i++)
             {
                 String message = randomString(random);
-                ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
-                client.write(buffer);
+                client.write(ByteBuffer.wrap(message.getBytes()));
 
                 ByteBuffer readBuffer = ByteBuffer.allocate(1024);
-                int bytesRead = client.read(readBuffer);
-                readBuffer.flip();
-
-                byte[] bytes = new byte[bytesRead];
-                readBuffer.get(bytes);
-                String response = new String(bytes);
+                if(client.read(readBuffer) == -1)
+                {
+                    System.out.println("read error");
+                }
+                String response = Charset.defaultCharset().decode(readBuffer.flip()).toString();
 
                 Assertions.assertEquals(response, message, "Response did not match request");
             }
