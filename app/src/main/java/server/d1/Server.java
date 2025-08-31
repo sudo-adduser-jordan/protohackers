@@ -139,7 +139,7 @@ public class Server
                 if (requestString.length() > 100)
                 {
                 System.out.println(requestString.length());
-                    context.getWriteBuffer().put(requestString.getBytes());
+//                    context.getWriteBuffer().put(requestString.getBytes());
                     throw new Exception("sjflsjfs");
                 }
 
