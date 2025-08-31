@@ -126,10 +126,11 @@ public class Server
             writeBuffer.put(responseBytes);
 //            writeBuffer.put((byte) '\n'); // Append newline if necessary
             writeBuffer.flip();
-
+//
 //            ByteBuffer.wrap(context.getJsonMapper().writeValueAsBytes(responseJSON)).putChar('\n');
 //            context.getWriteBuffer().put(ByteBuffer.wrap(context.getJsonMapper().writeValueAsBytes(responseJSON)).putChar('\n')).flip();
 
+            context.getChannel().write(writeBuffer);
         }
         catch (Exception e)
         {
