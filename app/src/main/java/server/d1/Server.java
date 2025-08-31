@@ -131,11 +131,11 @@ public class Server
         if (-1 != context.getChannel().read(context.getReadBuffer()))
         {
             String requestString = Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString();
-            if (requestString.length() > 100)
-            {
-                closeChannel(key);
-                return;
-            }
+//            if (requestString.length() > 100)
+//            {
+//                closeChannel(key);
+//                return;
+//            }
 
 
             logger.debug("Request: \t" + requestString);
