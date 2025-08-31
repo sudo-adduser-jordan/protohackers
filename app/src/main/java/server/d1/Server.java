@@ -112,7 +112,7 @@ public class Server
         {
             logger.info("Response:\t" + Charset.defaultCharset().decode(context.getWriteBuffer().flip()));
 //            context.getChannel().write(context.getWriteBuffer().flip().putChar('\n'));
-            context.getChannel().write(context.getWriteBuffer().flip().putChar('\n'));
+            context.getChannel().write(context.getWriteBuffer().flip());
             closeChannel(key);
         }
         else
