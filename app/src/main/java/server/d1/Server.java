@@ -148,9 +148,7 @@ public class Server
 
 
                 RequestJSON requestJSON = context.getJsonMapper()
-                                                 .readValue(Charset.defaultCharset()
-                                                                   .decode(context.getReadBuffer().flip())
-                                                                   .toString(), RequestJSON.class);
+                                                 .readValue(requestString, RequestJSON.class);
                 ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
 
                 String responseString = context.getJsonMapper().writeValueAsString(responseJSON);
