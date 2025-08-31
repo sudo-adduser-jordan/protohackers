@@ -124,24 +124,29 @@ public class Server
         ChannelContext context = (ChannelContext) key.attachment();
         context.getReadBuffer().clear();
 
-        // if data
-//        int requestLength = context.getChannel().read(context.getReadBuffer());
-
-
-        if (-1 != context.getChannel().read(context.getReadBuffer()))
+        if ( -1 != context.getChannel().read(context.getReadBuffer()))
         {
-            String requestString = Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString();
-//            if (requestString.length() > 100)
-//            {
-//                closeChannel(key);
-//                return;
-//            }
+            String requestString = Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString().trim();
+
 
 
             logger.debug("Request: \t" + requestString);
 
             try // if valid json
             {
+
+
+                if (requestString.length() > 1)
+                {
+                System.out.println(requestString.length());
+                    context.getWriteBuffer().put(requestString.getBytes());
+                    throw new Exception("sjflsjfs");
+                }
+
+
+
+
+
                 RequestJSON requestJSON = context.getJsonMapper()
                                                  .readValue(Charset.defaultCharset()
                                                                    .decode(context.getReadBuffer().flip())
