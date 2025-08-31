@@ -112,12 +112,8 @@ public class Server
     public static void handleWrite(SelectionKey key) throws IOException
     {
         ChannelContext context = (ChannelContext) key.attachment();
-        String message = context.getMessageBuffer().toString();
-        logger.debug("Response:\t" + message);
-
-        context.getChannel().write(ByteBuffer.wrap(message.getBytes()));
-
-        context.getMessageBuffer().setLength(0);
+        logger.debug("Response:\t" + context.getMessageBuffer().toString());
+        context.getChannel().write(ByteBuffer.wrap(context.getMessageBuffer().toString().getBytes()));
         key.interestOps(SelectionKey.OP_READ);
     }
 
@@ -156,39 +152,36 @@ public class Server
 
         String requestString = Charset.defaultCharset().decode(readBuffer.flip()).toString();
         logger.debug("Request: \t" + requestString);
-
-        if (bytesRead == -1 || bytesRead == 0)
+//
+//        if (bytesRead == -1 || bytesRead == 0)
+//        {
+//            logger.warning("Invalid read: " + requestString);
+//            context.getMessageBuffer().append(requestString);
+//            key.interestOps(SelectionKey.OP_WRITE);
+//            closeChannel(key);
+//            return;
+//        }
+        
+        RequestJSON requestJSON = parseRequestJSON(requestString, context.getJsonMapper());
+        if (null == requestJSON) // if not valid json
         {
-            logger.warning("Invalid read: " + requestString);
+            logger.warning("Invalid JSON: " + requestString);
             context.getMessageBuffer().append(requestString);
             key.interestOps(SelectionKey.OP_WRITE);
             closeChannel(key);
         }
         else
-//        if (0 < bytesRead)
         {
+            ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
+            String responseString = context.getJsonMapper().writeValueAsString(responseJSON);
 
-            RequestJSON requestJSON = parseRequestJSON(requestString, context.getJsonMapper());
-            if (null == requestJSON) // if not valid json
-            {
-                logger.warning("Invalid JSON: " + requestString);
-                context.getMessageBuffer().append(requestString);
-                key.interestOps(SelectionKey.OP_WRITE);
-                closeChannel(key);
-            }
-            else
-            {
-                ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
-                String responseString = context.getJsonMapper().writeValueAsString(responseJSON);
+            if (requestString.contains("\n")) responseString += "\n";
 
-                if (requestString.contains("\n")) responseString += "\n";
-
-                context.getWriteBuffer().put(responseString.getBytes());
-                context.getMessageBuffer().append(responseString);
-                key.interestOps(SelectionKey.OP_WRITE);
-            }
-
+            context.getWriteBuffer().put(responseString.getBytes());
+            context.getMessageBuffer().append(responseString);
+            key.interestOps(SelectionKey.OP_WRITE);
         }
+
     }
 
 
