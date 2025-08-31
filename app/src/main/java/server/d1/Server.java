@@ -159,6 +159,8 @@ public class Server
             key.interestOps(SelectionKey.OP_WRITE);
             closeChannel(key);
         }
+        if (0 < bytesRead)
+        {
 
         RequestJSON requestJSON = parseRequestJSON(requestString, context.getJsonMapper());
         if (null == requestJSON) // if not valid json
@@ -168,8 +170,6 @@ public class Server
             key.interestOps(SelectionKey.OP_WRITE);
             closeChannel(key);
         }
-        if (0 < bytesRead)
-        {
             ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
 
             String responseString = context.getJsonMapper().writeValueAsString(responseJSON);
