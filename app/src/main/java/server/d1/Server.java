@@ -152,7 +152,7 @@ public class Server
         String requestString = Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString();
         logger.debug("Request: \t" + requestString);
 
-        if (bytesRead == -1 )
+        if (bytesRead == -1)
         {
             logger.warning("Invalid read: " + requestString);
             context.getWriteBuffer().put(requestString.getBytes());
@@ -162,14 +162,17 @@ public class Server
         if (0 < bytesRead)
         {
 
-        RequestJSON requestJSON = parseRequestJSON(requestString, context.getJsonMapper());
-        if (null == requestJSON) // if not valid json
-        {
-            logger.warning("Invalid JSON: " + requestString);
-            context.getWriteBuffer().put(requestString.getBytes());
-            key.interestOps(SelectionKey.OP_WRITE);
-            closeChannel(key);
-        }
+            RequestJSON requestJSON = parseRequestJSON(requestString, context.getJsonMapper());
+            if (null == requestJSON) // if not valid json
+            {
+                logger.warning("Invalid JSON: " + requestString);
+                context.getWriteBuffer().put(requestString.getBytes());
+                key.interestOps(SelectionKey.OP_WRITE);
+                closeChannel(key);
+            } else {
+
+
+
             ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
 
             String responseString = context.getJsonMapper().writeValueAsString(responseJSON);
@@ -178,6 +181,8 @@ public class Server
 
             context.getWriteBuffer().put(responseString.getBytes());
             key.interestOps(SelectionKey.OP_WRITE);
+            }
+            
         }
     }
 
