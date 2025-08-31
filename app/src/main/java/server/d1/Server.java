@@ -125,8 +125,6 @@ public class Server
                 context.getMessageBuffer().setLength(0);
                 context.getMessageBuffer().append("close");
             }
-            ;
-
 
             try
             {
@@ -135,7 +133,8 @@ public class Server
                 ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
 
 
-                context.getWriteBuffer().put(context.getJsonMapper().writeValueAsBytes(responseJSON));
+                String test = context.getJsonMapper().writeValueAsString(responseJSON) + '\n';
+                context.getWriteBuffer().put(test.getBytes());
                 key.interestOps(SelectionKey.OP_WRITE);
             }
             catch (Exception e)
