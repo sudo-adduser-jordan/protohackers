@@ -112,12 +112,11 @@ public class Server
     public static void handleWrite(SelectionKey key) throws IOException
     {
         ChannelContext context = (ChannelContext) key.attachment();
-        String response = context.getMessageBuffer().toString();
-        logger.debug("Response:\t" + response);
+        String message = context.getMessageBuffer().toString();
+        logger.debug("Response:\t" + message);
 
-        context.getChannel().write(ByteBuffer.wrap(response.getBytes()));
+        context.getChannel().write(ByteBuffer.wrap(message.getBytes()));
 
-        context.getWriteBuffer().clear();
         context.getMessageBuffer().setLength(0);
         key.interestOps(SelectionKey.OP_READ);
     }
@@ -147,7 +146,7 @@ public class Server
     {
         ChannelContext context = (ChannelContext) key.attachment();
         ByteBuffer readBuffer = context.getReadBuffer();
-        StringBuilder messageBuilder =  context.getMessageBuffer();
+        StringBuilder messageBuilder = context.getMessageBuffer();
 
         readBuffer.clear();
         messageBuilder.setLength(0);
@@ -158,7 +157,7 @@ public class Server
         String requestString = Charset.defaultCharset().decode(readBuffer.flip()).toString();
         logger.debug("Request: \t" + requestString);
 
-        if (bytesRead == -1)
+        if (bytesRead == -1 || bytesRead == 0)
         {
             logger.warning("Invalid read: " + requestString);
             context.getMessageBuffer().append(requestString);
@@ -176,19 +175,17 @@ public class Server
                 context.getMessageBuffer().append(requestString);
                 key.interestOps(SelectionKey.OP_WRITE);
                 closeChannel(key);
-            } else {
+            }
+            else
+            {
+                ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
+                String responseString = context.getJsonMapper().writeValueAsString(responseJSON);
 
+                if (requestString.contains("\n")) responseString += "\n";
 
-
-            ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
-
-            String responseString = context.getJsonMapper().writeValueAsString(responseJSON);
-
-            if (requestString.contains("\n")) responseString += "\n";
-
-            context.getWriteBuffer().put(responseString.getBytes());
-            context.getMessageBuffer().append(responseString);
-            key.interestOps(SelectionKey.OP_WRITE);
+                context.getWriteBuffer().put(responseString.getBytes());
+                context.getMessageBuffer().append(responseString);
+                key.interestOps(SelectionKey.OP_WRITE);
             }
 
         }
