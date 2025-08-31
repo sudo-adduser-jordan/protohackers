@@ -162,7 +162,7 @@ public class Server
             key.interestOps(SelectionKey.OP_WRITE);
             closeChannel(key);
         }
-        else 
+        else
 //        if (0 < bytesRead)
         {
 
