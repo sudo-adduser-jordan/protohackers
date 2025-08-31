@@ -153,7 +153,7 @@ public class Server
                                                                    .toString(), RequestJSON.class);
                 ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
 
-                String responseString = context.getJsonMapper().writeValueAsString(responseJSON);
+                String responseString = context.getJsonMapper().writeValueAsString(responseJSON) +"\n";
                 context.getWriteBuffer().put(responseString.getBytes());
                 key.interestOps(SelectionKey.OP_WRITE);
             }
