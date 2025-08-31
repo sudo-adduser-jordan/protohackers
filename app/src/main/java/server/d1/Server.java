@@ -33,12 +33,25 @@ public class Server
     {
         try // to acceptConnections
         {
-            if (!key.isValid())
-                return; // Skip invalid keys
 
-            if (key.isAcceptable()) handleAccept(key);
-            if (key.isReadable()) handleRead(key);
-            if (key.isValid()) if (key.isWritable()) handleWrite(key);
+            if (key.isValid())
+            {
+
+                if (key.isAcceptable())
+                {
+                    handleAccept(key);
+                }
+
+                if (key.isReadable())
+                {
+                    handleRead(key);
+                }
+
+                if (key.isWritable())
+                {
+                    handleWrite(key);
+                }
+            }
         }
         catch (Exception e)
         {
@@ -98,7 +111,8 @@ public class Server
         if (context.getMessageBuffer().toString().equals("close"))
         {
             logger.info("Response:\t" + Charset.defaultCharset().decode(context.getWriteBuffer().flip()));
-            context.getChannel().write(context.getWriteBuffer().flip());
+//            context.getChannel().write(context.getWriteBuffer().flip().putChar('\n'));
+            context.getChannel().write(context.getWriteBuffer().flip().putChar('\n'));
             closeChannel(key);
         }
         else
@@ -120,7 +134,7 @@ public class Server
         {
             logger.info("Request: \t" + Charset.defaultCharset().decode(context.getReadBuffer().flip()));
 
-            if (new String(context.getReadBuffer().flip().array()).contains("\n"))
+            if (Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString().contains("\n"))
             {
                 context.getMessageBuffer().setLength(0);
                 context.getMessageBuffer().append("close");
@@ -129,20 +143,19 @@ public class Server
             try
             {
                 RequestJSON requestJSON = context.getJsonMapper()
-                                                 .readValue(context.getReadBuffer().flip().array(), RequestJSON.class);
+                                                 .readValue(Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString(), RequestJSON.class);
                 ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
 
 
-                String test = context.getJsonMapper().writeValueAsString(responseJSON) + '\n';
-                context.getWriteBuffer().put(test.getBytes());
+//                String responseString = context.getJsonMapper().writeValueAsString(responseJSON) + '\n';
+//                String responseString = context.getJsonMapper().writeValueAsString(responseJSON).strip();
+                String responseString = context.getJsonMapper().writeValueAsString(responseJSON);
+                context.getWriteBuffer().put(responseString.getBytes());
                 key.interestOps(SelectionKey.OP_WRITE);
             }
             catch (Exception e)
             {
-                context.getMessageBuffer().setLength(0);
-                context.getMessageBuffer().append("close");
                 context.getWriteBuffer().put(context.getReadBuffer());
-
                 key.interestOps(SelectionKey.OP_WRITE);
             }
 
