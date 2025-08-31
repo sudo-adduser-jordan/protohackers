@@ -109,21 +109,20 @@ public class Server
     public static void handleWrite(SelectionKey key) throws IOException
     {
         ChannelContext context = (ChannelContext) key.attachment();
-        String response = Charset.defaultCharset().decode(context.getWriteBuffer().flip()).toString() + '\n';
+        String response = Charset.defaultCharset().decode(context.getWriteBuffer().flip()).toString();
         logger.info("Response:\t" + response);
 
         if (context.getMessageBuffer().toString().equals("close"))
         {
-            context.getChannel().write(ByteBuffer.wrap(response.getBytes()));
+            context.getChannel().write(context.getWriteBuffer().flip());
             closeChannel(key);
         }
         else
         {
             context.getChannel().write(context.getWriteBuffer().flip());
+            key.interestOps(SelectionKey.OP_READ);
         }
-
         context.getWriteBuffer().clear();
-        key.interestOps(SelectionKey.OP_READ);
     }
 
     // READ
@@ -153,7 +152,7 @@ public class Server
                                                                    .toString(), RequestJSON.class);
                 ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
 
-                String responseString = context.getJsonMapper().writeValueAsString(responseJSON) +"\n";
+                String responseString = context.getJsonMapper().writeValueAsString(responseJSON);
                 context.getWriteBuffer().put(responseString.getBytes());
                 key.interestOps(SelectionKey.OP_WRITE);
             }
