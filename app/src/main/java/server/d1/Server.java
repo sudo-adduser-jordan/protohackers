@@ -7,7 +7,6 @@ import server.ServerLogOptions;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -109,19 +108,12 @@ public class Server
     public static void handleWrite(SelectionKey key) throws IOException
     {
         ChannelContext context = (ChannelContext) key.attachment();
-//        String response = Charset.defaultCharset().decode(context.getWriteBuffer().flip()).toString();
-//        logger.info("Response:\t" + response);
+        String response = Charset.defaultCharset().decode(context.getWriteBuffer().flip()).toString();
+        logger.debug(response);
 
-        if (context.getMessageBuffer().toString().equals("close"))
-        {
-            context.getChannel().write(context.getWriteBuffer().flip());
-            closeChannel(key);
-        }
-        else
-        {
-            context.getChannel().write(context.getWriteBuffer().flip());
-            key.interestOps(SelectionKey.OP_READ);
-        }
+        context.getChannel().write(context.getWriteBuffer().flip());
+
+        key.interestOps(SelectionKey.OP_READ);
         context.getWriteBuffer().clear();
     }
 
@@ -131,20 +123,13 @@ public class Server
         ChannelContext context = (ChannelContext) key.attachment();
         context.getReadBuffer().clear();
 
-
+        // if data
         if (context.getChannel().read(context.getReadBuffer()) != -1)
         {
             String requestString = Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString();
+            logger.debug("Request: \t" + requestString);
 
-            logger.info("Request: \t" + requestString);
-
-            if (requestString.contains("\n"))
-            {
-                context.getMessageBuffer().setLength(0);
-                context.getMessageBuffer().append("close");
-            }
-
-            try
+            try // if valid json
             {
                 RequestJSON requestJSON = context.getJsonMapper()
                                                  .readValue(Charset.defaultCharset()
@@ -153,11 +138,17 @@ public class Server
                 ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
 
                 String responseString = context.getJsonMapper().writeValueAsString(responseJSON);
+
+                if (requestString.contains("\n"))
+                {
+                    responseString += "\n";
+                }
+
                 context.getWriteBuffer().put(responseString.getBytes());
                 key.interestOps(SelectionKey.OP_WRITE);
             }
             catch (Exception e)
-            {
+            { // if not valid json
                 context.getMessageBuffer().setLength(0);
                 context.getMessageBuffer().append("close");
                 context.getWriteBuffer().put(requestString.getBytes());
