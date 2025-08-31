@@ -181,8 +181,7 @@ public class Server
                 ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
                 String responseString = context.getJsonMapper().writeValueAsString(responseJSON);
 
-//                if (requestString.contains("\n"))
-                responseString += "\n";
+                if (requestString.contains("\n")) responseString += "\n";
 
                 context.getWriteBuffer().put(responseString.getBytes());
                 context.getMessageBuffer().append(responseString);
