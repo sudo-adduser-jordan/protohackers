@@ -109,7 +109,8 @@ public class Server
     {
         ChannelContext context = (ChannelContext) key.attachment();
         String response = Charset.defaultCharset().decode(context.getWriteBuffer().flip()).toString();
-        logger.debug(response);
+        logger.debug("Response:\t" + response);
+
 
         context.getChannel().write(context.getWriteBuffer().flip());
 
