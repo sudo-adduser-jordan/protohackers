@@ -46,19 +46,31 @@ class TestServer
             ByteBuffer request = ByteBuffer.wrap(JSONRequests.validJSON.getBytes());
             ByteBuffer readBuffer = ByteBuffer.allocate(1024);
 
-                System.out.println(index);
-//            for (int index2 = 0; index2 < 5; index2++)
-            {
-                clientSocketChannel.write(request);
-                int bytesRead = clientSocketChannel.read(readBuffer);
-                readBuffer.flip();
+            // without \n stay open
+            clientSocketChannel.write(request);
+            int bytesRead = clientSocketChannel.read(readBuffer);
+            System.out.println(index);
+            readBuffer.flip();
 
-                byte[] bytes = new byte[bytesRead];
-                readBuffer.get(bytes);
-                String response = new String(bytes);
+            byte[] bytes = new byte[bytesRead];
+            readBuffer.get(bytes);
+            String response = new String(bytes);
 
-                Assertions.assertEquals(JSONRequests.validJSONResponse, response, "Response did not match request");
-            }
+            Assertions.assertEquals(JSONRequests.validJSONResponse, response, "Response did not match request");
+
+            // with \n close
+            clientSocketChannel.write(request);
+            bytesRead = clientSocketChannel.read(readBuffer);
+            System.out.println(index);
+            readBuffer.flip();
+
+            bytes = new byte[bytesRead];
+            readBuffer.get(bytes);
+            response = new String(bytes);
+
+            Assertions.assertEquals(JSONRequests.validJSONResponse, response, "Response did not match request");
+            Assertions.assertFalse(clientSocketChannel.isOpen());
+
         }
     }
 

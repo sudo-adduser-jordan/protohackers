@@ -7,68 +7,53 @@ public class JSONRequests
             {"method": "isPrime", "number": 123}""";
 
     public static final String validJSONResponse = """
-            { "method" : "isPrime", "prime" : "false"}""";
+            { "method":"isPrime", "prime":"false"}""";
 
     // Invalid JSON strings
     public static final String invalidJSONMissingColon = """
-            {"method": "isPrime", "number" 123}
-            """;
+            {"method": "isPrime", "number" 123}""";
 
     public static final String invalidJSONTrailingComma = """
-            {"method": "isPrime", "number": 123,}
-            """;
+            {"method": "isPrime", "number": 123,}""";
 
     public static final String invalidJSONUnclosedBrace = """
-            {"method": "isPrime", "number": 123
-            """;
+            {"method": "isPrime", "number": 123""";
 
     public static final String invalidJSONExtraComma = """
-            {"method": "isPrime", "number": 123,}
-            """;
+            {"method": "isPrime", "number": 123,}""";
 
     public static final String invalidJSONMissingQuotes = """
-            {method: "isPrime", "number": 123}
-            """;
+            {method: "isPrime", "number": 123}""";
 
     public static final String invalidJSONWrongQuotes = """
-            {'method': 'isPrime', 'number': 123}
-            """;
+            {'method': 'isPrime', 'number': 123}""";
 
     public static final String invalidJSONEmptyObject = """
-            {}
-            """;
+            {}""";
 
     public static final String invalidJSONEmptyArray = """
-            []
-            """;
+            []""";
 
     public static final String invalidJSONNumberAsString = """
-            {"method": "isPrime", "number": "123"}
-            """;
+            {"method": "isPrime", "number": "123"}""";
 
     public static final String invalidJSONExtraField = """
-            {"method": "isPrime", "number": 123, "extra": "field"}
-            """;
+            {"method": "isPrime", "number": 123, "extra": "field"}""";
 
     public static final String invalidJSONMissingMethod = """
-            {"number": 123}
-            """;
+            {"number": 123}""";
 
     public static final String invalidJSONMissingNumber = """
-            {"method": "isPrime"}
-            """;
+            {"method": "isPrime"}""";
 
     public static final String invalidJSONIncorrectType = """
-            {"method": "isPrime", "number": "notANumber"}
-            """;
+            {"method": "isPrime", "number": "notANumber"}""";
 
     public static final String invalidJSONArrayInsteadOfObject = """
-            ["method", "isPrime", "number", 123]
-            """;
+            ["method", "isPrime", "number", 123]""";
 
     public static final String invalidJSONNestedMalformed = """
-            {"method": "isPrime", "parameters": {"number": 123}
-            """;
+            {"method": "isPrime", "parameters": {"number": 123}""";
 
     public static String[] getInvalidJSONRequests()
     {

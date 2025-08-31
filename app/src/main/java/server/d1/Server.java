@@ -7,14 +7,12 @@ import server.ServerLogOptions;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.util.Iterator;
-import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -58,91 +56,99 @@ public class Server
         return bigInt.isProbablePrime(100);
     }
 
-    private static void handleAccept(SelectionKey key) throws Exception
-    {
-        ServerSocketChannel serverChannel = (ServerSocketChannel) key.channel();
-        SocketChannel clientChannel = serverChannel.accept();
-        clientChannel.configureBlocking(false);
-        clientChannel.register(key.selector(), SelectionKey.OP_READ, new ChannelContext(clientChannel));
-        logger.info("Client connected to channel: " + clientChannel.socket().getInetAddress());
-    }
-
-    public static void handleWrite(SelectionKey key) throws IOException
+    private static void closeChannel(SelectionKey key)
     {
         ChannelContext context = (ChannelContext) key.attachment();
-        ByteBuffer writeBuffer = context.getWriteBuffer();
-        SocketChannel clientChannel = context.getChannel();
-
-
-        String data = Charset.defaultCharset()
-                             .decode(writeBuffer)
-                             .toString();
-        logger.info("Response:\t" + data);
-
-
-        clientChannel.write(writeBuffer);
-        writeBuffer.clear();
-        key.interestOps(SelectionKey.OP_READ);
-    }
-
-
-    public static void handleRead(SelectionKey key) throws Exception
-    {
-        ChannelContext context = (ChannelContext) key.attachment();
-        ByteBuffer readByteBuffer = context.getReadBuffer().clear();
-
-        int bytesRead = context.getChannel().read(readByteBuffer);
-        if (bytesRead == -1)
+        try
         {
-            logger.warning("Client disconnected: " + context.getChannel().socket().getInetAddress());
+            logger.warning("Client disconnected: " + context.getChannel().toString());
             context.getChannel()
                    .close();
             key.cancel();
-            return;
-        }
-
-        readByteBuffer.flip();
-        String data = Charset.defaultCharset()
-                             .decode(readByteBuffer)
-                             .toString().trim();
-        logger.info("Request: \t" + data);
-
-        try
-        {
-            RequestJSON requestJSON = context.getJsonMapper().readValue(data, RequestJSON.class);
-            logger.debug(requestJSON.toString());
-
-            if (!Objects.equals(requestJSON.getMethod(), "isPrime"))
-            {
-                throw new Exception("method does not equal 'isPrime'");
-            }
-            boolean isPrime = isPrimeDouble(requestJSON.getNumber());
-            ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrime);
-            logger.debug(responseJSON.toString());
-
-            byte[] responseBytes = context.getJsonMapper().writeValueAsBytes(responseJSON);
-            ByteBuffer writeBuffer = context.getWriteBuffer();
-            writeBuffer.clear();
-            writeBuffer.put(responseBytes);
-//            writeBuffer.put((byte) '\n'); // Append newline if necessary
-            writeBuffer.flip();
-//
-//            ByteBuffer.wrap(context.getJsonMapper().writeValueAsBytes(responseJSON)).putChar('\n');
-//            context.getWriteBuffer().put(ByteBuffer.wrap(context.getJsonMapper().writeValueAsBytes(responseJSON)).putChar('\n')).flip();
-
-            context.getChannel().write(writeBuffer);
         }
         catch (Exception e)
         {
-            logger.debug("Invalid: " + data);
-            context.getChannel().write(context.getWriteBuffer().put((data + "\n").getBytes()).flip());
-            context.getChannel()
-                   .close();
+            System.out.println("x");
+        }
+    }
+
+    private static void handleAccept(SelectionKey key)
+    {
+        ServerSocketChannel serverChannel;
+        try
+        {
+            serverChannel = (ServerSocketChannel) key.channel();
+            SocketChannel clientChannel = serverChannel.accept();
+            clientChannel.configureBlocking(false);
+            clientChannel.register(key.selector(), SelectionKey.OP_READ, new ChannelContext(clientChannel));
+            logger.info("Client connected to channel: " + clientChannel.socket().getInetAddress());
+        }
+        catch (Exception e)
+        {
+            logger.error("Error connecting client to server channel: " + e.getMessage());
             key.cancel();
-            return;
+        }
+    }
+
+    // WRITE
+    public static void handleWrite(SelectionKey key) throws IOException
+    {
+        ChannelContext context = (ChannelContext) key.attachment();
+
+        if (context.getMessageBuffer().toString().equals("close"))
+        {
+            logger.info("Response:\t" + Charset.defaultCharset().decode(context.getWriteBuffer().flip()));
+            context.getChannel().write(context.getWriteBuffer().flip());
+            closeChannel(key);
+        }
+        else
+        {
+            logger.info("Response:\t" + Charset.defaultCharset().decode(context.getWriteBuffer().flip()));
+            context.getChannel().write(context.getWriteBuffer().flip());
         }
 
-        key.interestOps(SelectionKey.OP_WRITE);
+        context.getWriteBuffer().clear();
+        key.interestOps(SelectionKey.OP_READ);
+    }
+
+    // READ
+    public static void handleRead(SelectionKey key) throws Exception
+    {
+        ChannelContext context = (ChannelContext) key.attachment();
+        context.getReadBuffer().clear();
+        if (context.getChannel().read(context.getReadBuffer()) != -1)
+        {
+            logger.info("Request: \t" + Charset.defaultCharset().decode(context.getReadBuffer().flip()));
+
+            if (new String(context.getReadBuffer().flip().array()).contains("\n"))
+            {
+                context.getMessageBuffer().setLength(0);
+                context.getMessageBuffer().append("close");
+            }
+            ;
+
+
+            try
+            {
+                RequestJSON requestJSON = context.getJsonMapper()
+                                                 .readValue(context.getReadBuffer().flip().array(), RequestJSON.class);
+                ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
+
+
+                context.getWriteBuffer().put(context.getJsonMapper().writeValueAsBytes(responseJSON));
+                key.interestOps(SelectionKey.OP_WRITE);
+            }
+            catch (Exception e)
+            {
+                context.getMessageBuffer().setLength(0);
+                context.getMessageBuffer().append("close");
+                context.getWriteBuffer().put(context.getReadBuffer());
+
+                key.interestOps(SelectionKey.OP_WRITE);
+            }
+
+        }
+
     }
 
 
@@ -183,14 +189,16 @@ public class Server
 
     public void startServer(int port)
     {
-        try // to start the server
+        // to start the server
+        try (
+                ServerSocketChannel serverSocketChannel = ServerSocketChannel.open()
+        )
         {
             logger.info("Starting server on port: " + port);
 
             Selector selector = Selector.open();
             logger.info("Selector created for server: " + selector.provider());
 
-            ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(false);
             serverSocketChannel.socket()
                                .bind(new InetSocketAddress(port));
