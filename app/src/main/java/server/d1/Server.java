@@ -120,8 +120,16 @@ public class Server
             ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrime);
             logger.debug(responseJSON.toString());
 
+            byte[] responseBytes = context.getJsonMapper().writeValueAsBytes(responseJSON);
+            ByteBuffer writeBuffer = context.getWriteBuffer();
+            writeBuffer.clear();
+            writeBuffer.put(responseBytes);
+//            writeBuffer.put((byte) '\n'); // Append newline if necessary
+            writeBuffer.flip();
+
 //            ByteBuffer.wrap(context.getJsonMapper().writeValueAsBytes(responseJSON)).putChar('\n');
-            context.getWriteBuffer().put(ByteBuffer.wrap(context.getJsonMapper().writeValueAsBytes(responseJSON)).putChar('\n')).flip();
+//            context.getWriteBuffer().put(ByteBuffer.wrap(context.getJsonMapper().writeValueAsBytes(responseJSON)).putChar('\n')).flip();
+
         }
         catch (Exception e)
         {
