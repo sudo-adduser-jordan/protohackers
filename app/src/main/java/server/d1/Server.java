@@ -152,7 +152,7 @@ public class Server
         String requestString = Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString();
         logger.debug("Request: \t" + requestString);
 
-        if (bytesRead == -1 || bytesRead > 500)
+        if (bytesRead == -1 )
         {
             logger.warning("Invalid read: " + requestString);
             context.getWriteBuffer().put(requestString.getBytes());
