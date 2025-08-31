@@ -86,7 +86,7 @@ public class Server
         }
         catch (Exception e)
         {
-            System.out.println("x");
+            logger.error(" " + e.getMessage());
         }
     }
 
@@ -147,37 +147,35 @@ public class Server
         readBuffer.clear();
         messageBuilder.setLength(0);
 
-
         int bytesRead = context.getChannel().read(readBuffer);
-
         String requestString = Charset.defaultCharset().decode(readBuffer.flip()).toString();
+
+        if (bytesRead == -1 )
+        {
+            logger.warning("Invalid read: " + bytesRead);
+            context.getMessageBuffer().append(requestString);
+            key.interestOps(SelectionKey.OP_WRITE);
+            closeChannel(key);
+            return;
+        }
         logger.debug("Request: \t" + requestString);
-//
-//        if (bytesRead == -1 || bytesRead == 0)
-//        {
-//            logger.warning("Invalid read: " + requestString);
-//            context.getMessageBuffer().append(requestString);
-//            key.interestOps(SelectionKey.OP_WRITE);
-//            closeChannel(key);
-//            return;
-//        }
-        
+
         RequestJSON requestJSON = parseRequestJSON(requestString, context.getJsonMapper());
-        if (null == requestJSON) // if not valid json
+        if (requestJSON == null) // if not valid json
         {
             logger.warning("Invalid JSON: " + requestString);
             context.getMessageBuffer().append(requestString);
             key.interestOps(SelectionKey.OP_WRITE);
             closeChannel(key);
+//            return;
         }
-        else
+        else // if valid json
         {
             ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
             String responseString = context.getJsonMapper().writeValueAsString(responseJSON);
 
             if (requestString.contains("\n")) responseString += "\n";
 
-            context.getWriteBuffer().put(responseString.getBytes());
             context.getMessageBuffer().append(responseString);
             key.interestOps(SelectionKey.OP_WRITE);
         }
