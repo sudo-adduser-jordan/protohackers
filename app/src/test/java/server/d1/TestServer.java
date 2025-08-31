@@ -38,7 +38,7 @@ class TestServer
     @RepeatedTest(CLIENT_COUNT)
     public void testValidJSONRequests()
     {
-        for (int index = 0; index < 5; index++)
+        for (int index = 0; index < CLIENT_COUNT; index++)
         {
             try (SocketChannel clientSocketChannel = SocketChannel.open())
             {
