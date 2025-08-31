@@ -9,6 +9,7 @@ import server.ServerLogOptions;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -146,10 +147,12 @@ public class Server
     {
         ChannelContext context = (ChannelContext) key.attachment();
         context.getReadBuffer().clear();
+        ByteBuffer readBuffer = context.getReadBuffer();
 
-        int bytesRead = context.getChannel().read(context.getReadBuffer());
 
-        String requestString = Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString();
+        int bytesRead = context.getChannel().read(readBuffer);
+
+        String requestString = Charset.defaultCharset().decode(readBuffer.flip()).toString();
         logger.debug("Request: \t" + requestString);
 
         if (bytesRead == -1)
@@ -182,7 +185,7 @@ public class Server
             context.getWriteBuffer().put(responseString.getBytes());
             key.interestOps(SelectionKey.OP_WRITE);
             }
-            
+
         }
     }
 
