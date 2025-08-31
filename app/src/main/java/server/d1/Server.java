@@ -152,7 +152,7 @@ public class Server
         String requestString = Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString();
         logger.debug("Request: \t" + requestString);
 
-        if (bytesRead == 0 || bytesRead == -1 || bytesRead > 500)
+        if (bytesRead == -1 || bytesRead > 500)
         {
             logger.warning("Invalid read: " + requestString);
             context.getWriteBuffer().put(requestString.getBytes());
@@ -168,11 +168,8 @@ public class Server
             key.interestOps(SelectionKey.OP_WRITE);
             closeChannel(key);
         }
-        else 
-//        if (null != requestJSON)
+        if (0 < bytesRead)
         {
-
-
             ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
 
             String responseString = context.getJsonMapper().writeValueAsString(responseJSON);
