@@ -125,9 +125,20 @@ public class Server
         context.getReadBuffer().clear();
 
         // if data
-        if (context.getChannel().read(context.getReadBuffer()) != -1)
+        int requestLength = context.getChannel().read(context.getReadBuffer());
+        if (requestLength > 100) {
+            closeChannel(key);
+            return;
+        }
+
+
+
+
+        if (-1 !=  requestLength)
         {
             String requestString = Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString();
+
+
             logger.debug("Request: \t" + requestString);
 
             try // if valid json

@@ -23,8 +23,8 @@ public class ChannelContext
     public ChannelContext(SocketChannel channel) {
         this.channel = channel;
         this.sessionMemoryCache = new SessionMemoryCache();
-        this.readBuffer = ByteBuffer.allocate(42069);
-        this.writeBuffer = ByteBuffer.allocate(42069);
+        this.readBuffer = ByteBuffer.allocate(1024);
+        this.writeBuffer = ByteBuffer.allocate(1024);
         this.messageBuffer = new StringBuilder();
         this.jsonMapper = JsonMapper.builder()
                                     .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
