@@ -109,8 +109,8 @@ public class Server
     public static void handleWrite(SelectionKey key) throws IOException
     {
         ChannelContext context = (ChannelContext) key.attachment();
-        String response = Charset.defaultCharset().decode(context.getWriteBuffer().flip()).toString();
-        logger.info("Response:\t" + response);
+//        String response = Charset.defaultCharset().decode(context.getWriteBuffer().flip()).toString();
+//        logger.info("Response:\t" + response);
 
         if (context.getMessageBuffer().toString().equals("close"))
         {
