@@ -1,5 +1,7 @@
 package server.d1;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import server.ChannelContext;
 import server.ServerLogFormatter;
 import server.ServerLogOptions;
@@ -13,6 +15,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -118,45 +121,66 @@ public class Server
         context.getWriteBuffer().clear();
     }
 
+    private static RequestJSON parseRequestJSON(String request, JsonMapper jsonMapper)
+    {
+        if (request == null) return null;
+
+        RequestJSON requestJSON;
+        try
+        {
+            requestJSON = jsonMapper.readValue(request, jsonMapper.getTypeFactory().constructType(RequestJSON.class));
+        }
+        catch (JsonProcessingException e)
+        {
+            return null;
+        }
+
+        if (!Objects.equals(requestJSON.getMethod(), "isPrime")) return null;
+
+        return requestJSON;
+    }
+
+
     // READ
     public static void handleRead(SelectionKey key) throws Exception
     {
         ChannelContext context = (ChannelContext) key.attachment();
         context.getReadBuffer().clear();
 
-        if ( -1 != context.getChannel().read(context.getReadBuffer()))
+        int bytesRead = context.getChannel().read(context.getReadBuffer());
+
+        String requestString = Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString();
+        logger.debug("Request: \t" + requestString);
+
+        if (bytesRead == 0 || bytesRead == -1 || bytesRead > 500)
         {
-            String requestString = Charset.defaultCharset().decode(context.getReadBuffer().flip()).toString();
-
-            logger.debug("Request: \t" + requestString);
-
-            try // if valid json
-            {
-
-                RequestJSON requestJSON = context.getJsonMapper()
-                                                 .readValue(requestString, RequestJSON.class);
-                ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
-
-                String responseString = context.getJsonMapper().writeValueAsString(responseJSON);
-
-                if (requestString.contains("\n"))
-                {
-                    responseString += "\n";
-                }
-
-                context.getWriteBuffer().put(responseString.getBytes());
-                key.interestOps(SelectionKey.OP_WRITE);
-            }
-            catch (Exception e)
-            { // if not valid json
-                context.getMessageBuffer().setLength(0);
-                context.getMessageBuffer().append("close");
-                context.getWriteBuffer().put(requestString.getBytes());
-                key.interestOps(SelectionKey.OP_WRITE);
-            }
-
+            logger.warning("Invalid read: " + requestString);
+            context.getWriteBuffer().put(requestString.getBytes());
+            key.interestOps(SelectionKey.OP_WRITE);
+            closeChannel(key);
         }
 
+        RequestJSON requestJSON = parseRequestJSON(requestString, context.getJsonMapper());
+        if (null == requestJSON) // if not valid json
+        {
+            logger.warning("Invalid JSON: " + requestString);
+            context.getWriteBuffer().put(requestString.getBytes());
+            key.interestOps(SelectionKey.OP_WRITE);
+            closeChannel(key);
+        }
+        if (null != requestJSON)
+        {
+
+
+            ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrimeDouble(requestJSON.getNumber()));
+
+            String responseString = context.getJsonMapper().writeValueAsString(responseJSON);
+
+            if (requestString.contains("\n")) responseString += "\n";
+
+            context.getWriteBuffer().put(responseString.getBytes());
+            key.interestOps(SelectionKey.OP_WRITE);
+        }
     }
 
 
