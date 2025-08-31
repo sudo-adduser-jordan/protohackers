@@ -16,7 +16,7 @@ public class ChannelContext
     private final SocketChannel channel;
     private final ByteBuffer readBuffer;
     private final ByteBuffer writeBuffer;
-    private final StringBuilder messageBuffer; // used to pass exceptions etc
+    private final StringBuilder messageBuffer;
     private final SessionMemoryCache sessionMemoryCache;
     private final JsonMapper jsonMapper;
 

@@ -112,14 +112,14 @@ public class Server
     public static void handleWrite(SelectionKey key) throws IOException
     {
         ChannelContext context = (ChannelContext) key.attachment();
-        String response = Charset.defaultCharset().decode(context.getWriteBuffer().flip()).toString();
+        String response = context.getMessageBuffer().toString();
         logger.debug("Response:\t" + response);
 
+        context.getChannel().write(ByteBuffer.wrap(response.getBytes()));
 
-        context.getChannel().write(context.getWriteBuffer().flip());
-
-        key.interestOps(SelectionKey.OP_READ);
         context.getWriteBuffer().clear();
+        context.getMessageBuffer().setLength(0);
+        key.interestOps(SelectionKey.OP_READ);
     }
 
     private static RequestJSON parseRequestJSON(String request, JsonMapper jsonMapper)
@@ -146,8 +146,11 @@ public class Server
     public static void handleRead(SelectionKey key) throws Exception
     {
         ChannelContext context = (ChannelContext) key.attachment();
-        context.getReadBuffer().clear();
         ByteBuffer readBuffer = context.getReadBuffer();
+        StringBuilder messageBuilder =  context.getMessageBuffer();
+
+        readBuffer.clear();
+        messageBuilder.setLength(0);
 
 
         int bytesRead = context.getChannel().read(readBuffer);
@@ -158,7 +161,7 @@ public class Server
         if (bytesRead == -1)
         {
             logger.warning("Invalid read: " + requestString);
-            context.getWriteBuffer().put(requestString.getBytes());
+            context.getMessageBuffer().append(requestString);
             key.interestOps(SelectionKey.OP_WRITE);
             closeChannel(key);
         }
@@ -170,7 +173,7 @@ public class Server
             if (null == requestJSON) // if not valid json
             {
                 logger.warning("Invalid JSON: " + requestString);
-                context.getWriteBuffer().put(requestString.getBytes());
+                context.getMessageBuffer().append(requestString);
                 key.interestOps(SelectionKey.OP_WRITE);
                 closeChannel(key);
             } else {
@@ -184,6 +187,7 @@ public class Server
             if (requestString.contains("\n")) responseString += "\n";
 
             context.getWriteBuffer().put(responseString.getBytes());
+            context.getMessageBuffer().append(responseString);
             key.interestOps(SelectionKey.OP_WRITE);
             }
 
