@@ -2,6 +2,7 @@ package server.d1;
 
 import server.ChannelContext;
 import server.ServerLogFormatter;
+import server.ServerLogOptions;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -20,7 +21,8 @@ import java.util.logging.Logger;
 public class Server
 {
     public static final int PORT = 42069;
-    private static final Logger logger = ServerLogFormatter.getLogger(Server.class);
+    private static final Logger log = ServerLogFormatter.getLogger(server.d1.Server.class);
+    private static final ServerLogOptions logger = new ServerLogOptions(log);
     volatile static boolean isRunning = true;
 
 
@@ -92,6 +94,7 @@ public class Server
         int bytesRead = context.getChannel().read(readByteBuffer);
         if (bytesRead == -1)
         {
+            logger.warning("Client disconnected: " + context.getChannel().socket().getInetAddress());
             context.getChannel()
                    .close();
             key.cancel();
@@ -107,7 +110,7 @@ public class Server
         try
         {
             RequestJSON requestJSON = context.getJsonMapper().readValue(data, RequestJSON.class);
-            logger.info(requestJSON.toString());
+            logger.debug(requestJSON.toString());
 
             if (!Objects.equals(requestJSON.getMethod(), "isPrime"))
             {
@@ -115,17 +118,19 @@ public class Server
             }
             boolean isPrime = isPrimeDouble(requestJSON.getNumber());
             ResponseJSON responseJSON = new ResponseJSON("isPrime", isPrime);
+            logger.debug(responseJSON.toString());
 
-            context.getWriteBuffer().put(context.getJsonMapper().writeValueAsBytes(responseJSON));
+//            ByteBuffer.wrap(context.getJsonMapper().writeValueAsBytes(responseJSON)).putChar('\n');
+            context.getWriteBuffer().put(ByteBuffer.wrap(context.getJsonMapper().writeValueAsBytes(responseJSON)).putChar('\n')).flip();
         }
         catch (Exception e)
         {
-            logger.warning("Invalid json: " + data);
+            logger.debug("Invalid: " + data);
             context.getChannel().write(context.getWriteBuffer().put((data + "\n").getBytes()).flip());
-            context.getChannel().close();
-            key.channel().close();
+            context.getChannel()
+                   .close();
+            key.cancel();
             return;
-//            context.getWriteBuffer().put(data.getBytes()).flip();
         }
 
         key.interestOps(SelectionKey.OP_WRITE);

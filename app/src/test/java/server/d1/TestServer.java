@@ -38,40 +38,43 @@ class TestServer
     @RepeatedTest(CLIENT_COUNT)
     public void testValidJSONRequests() throws IOException
     {
-        SocketChannel client = SocketChannel.open();
-        client.connect(new InetSocketAddress("localhost", TEST_PORT));
-         client.configureBlocking(false);
+        for (int index = 0; index < 5; index++)
+        {
+            SocketChannel clientSocketChannel = SocketChannel.open();
+            clientSocketChannel.connect(new InetSocketAddress("localhost", TEST_PORT));
 
-        String message = JSONRequests.validJSON;
-        ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
-        client.write(buffer);
+            ByteBuffer request = ByteBuffer.wrap(JSONRequests.validJSON.getBytes());
+            ByteBuffer readBuffer = ByteBuffer.allocate(1024);
 
-        ByteBuffer readBuffer = ByteBuffer.allocate(1024);
-        int bytesRead = client.read(readBuffer);
-        readBuffer.flip();
+                System.out.println(index);
+//            for (int index2 = 0; index2 < 5; index2++)
+            {
+                clientSocketChannel.write(request);
+                int bytesRead = clientSocketChannel.read(readBuffer);
+                readBuffer.flip();
 
-        byte[] bytes = new byte[bytesRead];
-        readBuffer.get(bytes);
-        String response = new String(bytes);
+                byte[] bytes = new byte[bytesRead];
+                readBuffer.get(bytes);
+                String response = new String(bytes);
 
-        Assertions.assertEquals(JSONRequests.validJSONResponse, response, "Response did not match request");
+                Assertions.assertEquals(JSONRequests.validJSONResponse, response, "Response did not match request");
+            }
+        }
     }
 
     @RepeatedTest(CLIENT_COUNT)
     public void testInvalidJSONRequests() throws IOException
     {
-        SocketChannel client = SocketChannel.open();
-        client.connect(new InetSocketAddress("localhost", TEST_PORT));
-        client.configureBlocking(true);
-
-        String[] inValidRequestJSON = JSONRequests.getInvalidJSONRequests();
-        for (String message : inValidRequestJSON)
+        for (String message : JSONRequests.getInvalidJSONRequests())
         {
+            SocketChannel clientSocketChannel = SocketChannel.open();
+            clientSocketChannel.connect(new InetSocketAddress("localhost", TEST_PORT));
+
             ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
-            client.write(buffer);
+            clientSocketChannel.write(buffer);
 
             ByteBuffer readBuffer = ByteBuffer.allocate(1024);
-            int bytesRead = client.read(readBuffer);
+            int bytesRead = clientSocketChannel.read(readBuffer);
             readBuffer.flip();
 
             byte[] bytes = new byte[bytesRead];

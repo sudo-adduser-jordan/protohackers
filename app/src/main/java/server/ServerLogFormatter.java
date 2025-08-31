@@ -59,6 +59,6 @@ public class ServerLogFormatter extends Formatter
         String message = record.getMessage();
 
         // Format: 2024-04-27 12:34:56 [LEVEL] loggerName: message
-        return String.format("%s %s\t%s: %s%n", BLUE + timestamp, levelFormatted, loggerName, GREEN + message);
+        return String.format("%s %s  \t%s: %s%n", BLUE + timestamp, levelFormatted, loggerName, GREEN + message);
     }
 }
