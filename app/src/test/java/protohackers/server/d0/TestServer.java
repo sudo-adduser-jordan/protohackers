@@ -43,9 +43,9 @@ public class TestServer
     }
 
     @AfterEach // close clients buffers and servers
-    public void tearDown() throws IOException
+    public void tearDown() 
     {
-        for (Connection socket : sockets) {socket.close();}
+        if (sockets != null) for (Connection socket : sockets) {socket.close();}
     }
 
     @Test // if valid response
