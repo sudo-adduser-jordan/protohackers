@@ -1,4 +1,4 @@
-package server.d1;
+package protohackers.server.d1;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,4 +1,4 @@
-package server.d1;
+package protohackers.server.d1;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;

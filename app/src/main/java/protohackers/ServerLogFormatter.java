@@ -1,4 +1,4 @@
-package server;
+package protohackers;
 
 import java.util.logging.*;
 

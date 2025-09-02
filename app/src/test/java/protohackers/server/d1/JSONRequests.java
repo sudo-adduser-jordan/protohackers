@@ -1,4 +1,4 @@
-package server.d1;
+package protohackers.server.d1;
 
 public class JSONRequests
 {

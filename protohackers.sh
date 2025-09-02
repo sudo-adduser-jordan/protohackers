@@ -24,7 +24,7 @@ sdk install gradle 9.0.0
 # build
 git clone https://github.com/sudo-adduser-jordan/protohackers ~/protohackers
 cd ~/protohackers
-gradle ~/protohackers d2
+#gradle ~/protohackers d2
 # gradle ~/protohackers d1
 # gradle ~/protohackers d0
 # gradle ~/Documents/GitHub/protohackers d2

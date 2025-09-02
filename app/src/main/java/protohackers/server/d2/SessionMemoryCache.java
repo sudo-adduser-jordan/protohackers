@@ -1,4 +1,4 @@
-package server;
+package protohackers.server.d2;
 
 import java.util.Map;
 import java.util.Set;
