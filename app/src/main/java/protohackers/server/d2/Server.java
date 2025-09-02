@@ -51,7 +51,7 @@ public class Server
         new Server().start(PORT);
     }
 
-    public static boolean isPrime(double number)
+    public static boolean sumAverage(double number)
     {
         if (number != Math.floor(number) || number <= 1) return false;
         BigInteger bigInt = BigInteger.valueOf((long) number);
