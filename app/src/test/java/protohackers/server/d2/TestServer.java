@@ -1,85 +1,110 @@
-//package protohackers.server.d1;
+package protohackers.server.d2;
+
+import org.junit.jupiter.api.*;
+import protohackers.Connection;
+import protohackers.ServerLogFormatter;
+import protohackers.ServerLogOptions;
+
+import java.io.IOException;
+import java.net.Socket;
+import java.util.ArrayList;
+
+public class TestServer
+{
+    private static final int CLIENTS = 5;
+    private static final int PORT = 12345;
+    private static final String HOST = "localhost";
+    private static final ServerLogOptions logger = new ServerLogOptions(ServerLogFormatter.getLogger(TestServer.class));
+
+    private static Thread serverThread;
+    private ArrayList<Connection> sockets;
+
 //
-//import org.junit.jupiter.api.*;
-//import protohackers.server.Context;
-//
-//import java.io.IOException;
-//import java.net.Socket;
-//import java.util.ArrayList;
-//
-//import static org.junit.jupiter.api.Assertions.assertTrue;
-//
-//public class TestServer
-//{
-//    private static final int CLIENTS = 5;
-//    private static final int PORT = 12345;
-//    private static final String HOST = "localhost";
-//
-//    private static Thread serverThread;
-//    private ArrayList<Context> sockets;
-//
-//    @BeforeAll // start a server
-//    public static void setUp()
+//    @Test // if the correct average is returned
+//    public void unitTestGetAverage()
 //    {
-//        serverThread = new Thread(() -> new Server().start(PORT));
-//        serverThread.start();
 //    }
-//
-//    @BeforeEach // setup client context
-//    public void setUpEach() throws IOException
-//    {
-//        sockets = new ArrayList<>();
-//        for (int i = 0; i < CLIENTS; i++)
-//        {
-//            Context socket = new Context(new Socket(HOST, PORT));
-//            sockets.add(socket);
-//        }
-//    }
-//
-//    @AfterEach // close clients buffers and servers
-//    public void tearDown() throws IOException, InterruptedException
-//    {
-//        for (Context socket : sockets)
-//        {
-//            socket.close();
-//        }
-//        serverThread.join();
-//    }
-//
-//    @Test // if integer is prime
-//    public void unitTestIsPrime()
-//    {
-//        assertTrue(Server.isPrime(2), "2 should be prime");
-//        assertTrue(Server.isPrime(13), "13 should be prime");
-//        Assertions.assertFalse(Server.isPrime(1), "1 is not prime");
-//        Assertions.assertFalse(Server.isPrime(0), "0 is not prime");
-//        Assertions.assertFalse(Server.isPrime(-7), "Negative numbers are not prime");
-//        Assertions.assertFalse(Server.isPrime(4), "4 is not prime");
-//        assertTrue(Server.isPrime(17), "17 should be prime");
-//        Assertions.assertFalse(Server.isPrime(100), "100 is not prime");
-//    }
-//
+
+    @BeforeAll // start a server
+    public static void setUp()
+    {
+        serverThread = new Thread(() -> new Server().start(PORT));
+        serverThread.start();
+    }
+
+    @BeforeEach // setup clients and context
+    public void setUpEach() throws IOException
+    {
+        sockets = new ArrayList<>();
+        for (int index = 0; index < CLIENTS; index++)
+        {
+            Connection socket = new Connection(new Socket(HOST, PORT));
+            socket.getSocket().setSoTimeout(1000);
+            sockets.add(socket);
+        }
+    }
+
+    @AfterEach // close clients buffers and servers
+    public void tearDown()
+    {
+        if (sockets != null) for (Connection socket : sockets) {socket.close();}
+    }
+
+    @AfterAll // close server
+    public static void tearDownAll() throws InterruptedException
+    {
+        serverThread.join(1);
+    }
+
 //    @Test // if valid response
-//    public void testValidJSON() throws IOException
+//    public void testValidJSON()
 //    {
-//        for (Context socket : sockets)
+//        for (Connection socket : sockets)
 //        {
-//            socket.getWriter().println(JSONRequests.validJSON);
-//            String response = socket.getReader().readLine();
-//            Assertions.assertNotNull(response);
-//            Assertions.assertEquals(JSONRequests.validJSONResponse, response);
+//            try // to catch when server disconnects client
+//            {
+//                // socket.getWriter().println(JSONRequests.validJSON); //
+//                socket.getWriter().println(JSONRequests.validJSON + "\n"); // w/ '\n'
+//                String response = socket.getReader().readLine();
+//                Assertions.assertNotNull(response);
+//                Assertions.assertEquals(JSONRequests.validJSONResponse, response);
+//            }
+//            catch (IOException e)
+//            {
+//                logger.info("Client disconnected | " + socket.getSocket().getInetAddress());
+//                Assertions.assertTrue(socket.getSocket().isClosed() || !socket.getSocket().isConnected());
+//            }
 //        }
 //    }
 //
-//    @Test // if valid response
-//    public void testInvalidJSON() throws IOException
+//
+//    @Test // if invalid response
+//    public void testInValidJSON() throws IOException
 //    {
-//        for (Context socket : sockets)
+//        tearDown(); // unused sockets that will time out
+//
+//        for (String inValidJSON : JSONRequests.getInvalidJSONRequests())
 //        {
-//            socket.getWriter().println(JSONRequests.validJSON);
-//            String response = socket.getReader().readLine();
-//            Assertions.assertNotNull(response);
-//            Assertions.assertEquals(JSONRequests.validJSONResponse, response);
+//            for (int index = 0; index < CLIENTS; index++)
+//            {
+//                Connection socket = new Connection(new Socket(HOST, PORT));
+//                socket.getSocket().setSoTimeout(1000);
+//
+//                try // to catch when server disconnects client
+//                {
+//                    socket.getWriter().println(inValidJSON); // send message
+//
+//                    String response = socket.getReader().readLine();
+//                    Assertions.assertNotNull(response);
+//                    Assertions.assertEquals(inValidJSON, response);
+//                }
+//                catch (IOException e)
+//                {
+//                    logger.info("Client disconnected | " + socket.getSocket().getInetAddress());
+//                    Assertions.assertTrue(socket.getSocket().isClosed() || !socket.getSocket().isConnected());
+//                }
+//            }
 //        }
 //    }
-//}
+
+}

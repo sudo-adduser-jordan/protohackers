@@ -1,224 +1,162 @@
-//
-//
-//package server.d2;
-//
-//import server.d1.ChannelContext;
-//import protohackers.ServerLogFormatter;
-//import protohackers.ServerLogOptions;
-//
-//import java.io.IOException;
-//import java.net.InetSocketAddress;
-//import java.nio.ByteBuffer;
-//import java.nio.ByteOrder;
-//import java.nio.channels.SelectionKey;
-//import java.nio.channels.Selector;
-//import java.nio.channels.ServerSocketChannel;
-//import java.nio.channels.SocketChannel;
-//import java.util.Iterator;
-//import java.util.Set;
-//import java.util.logging.Logger;
-//
-//public class Server
-//{
-//    public static final int PORT = 42069;
-//    private static final Logger log = protohackers.ServerLogFormatter.getLogger(Server.class);
-//    private static final protohackers.ServerLogOptions logger = new protohackers.ServerLogOptions(log);
-//    private static final int REQUEST_LENGTH = 9;
-//    private static final int RESPONSE_LENGTH = 4;
-//    private static final char INSERT_CHAR = 'I';
-//    private static final char QUERY_CHAR = 'Q';
-//    volatile static boolean isRunning = true;
-//
-//    public static void main(String[] args)
-//    {
-//        new Server().startServer(PORT);
-//    }
-//
-//    public static void acceptConnections(SelectionKey key) throws IOException
-//    {
-//        try // to acceptConnections
-//        {
-//            if (!key.isValid())
-//                return; // Skip invalid keys
-//
-//            if (key.isAcceptable()) handleAccept(key);
-//            if (key.isReadable()) handleRead(key);
-//            if (key.isValid()) if (key.isWritable()) handleWrite(key);
-//        }
-//        catch (Exception e)
-//        {
-//            logger.warning("Connection error: " + e.getMessage());
-//            key.cancel();
-//            key.channel()
-//               .close();
-//        }
-//    }
-//
-//    private static void handleAccept(SelectionKey key) throws Exception
-//    {
-//        ServerSocketChannel serverChannel = (ServerSocketChannel) key.channel();
-//        SocketChannel clientChannel = serverChannel.accept();
-//        clientChannel.configureBlocking(false);
-//        clientChannel.register(key.selector(), SelectionKey.OP_READ, new ChannelContext(clientChannel));
-//        logger.info("Client connected to channel: " + clientChannel.socket().getInetAddress());
-//    }
-//
-//
-//    // Hexadecimal: 00 00 13 f3
-//    // Decoded: 5107 // send the byte
-//    public static void handleWrite(SelectionKey key) throws IOException
-//    {
-//        ChannelContext context = (ChannelContext) key.attachment();
-////
-////        String data = Charset.defaultCharset()
-////                             .decode(context.getWriteByteBuffer().flip())
-////                             .toString();
-//        logger.info("Response: \t" + context.getWriteByteBuffer().flip().getInt());
-//
-//        context.getChannel().write(context.getWriteByteBuffer().flip());
-//        context.getWriteByteBuffer().clear();
-//        key.interestOps(SelectionKey.OP_READ);
-//    }
-//
-//    public static void handleRead(SelectionKey key) throws Exception
-//    {
-//        ChannelContext context = (ChannelContext) key.attachment();
-//        ByteBuffer readByteBuffer = context.getReadByteBuffer();
-//        readByteBuffer.clear();
-//
-//        int bytesRead = context.getChannel().read(readByteBuffer);
-//        if (bytesRead == -1)
-//        {
-//            context.getChannel()
-//                   .close();
-//            key.cancel();
-//            return;
-//        }
-//
-//        readByteBuffer.flip();
-//
-//        Request.RequestBuilder builder = Request.builder();
-//        byte[] responseByteArray = readByteBuffer.array();
-//
-//        int firstValue = ByteBuffer.wrap(responseByteArray, 1, 4)
-//                                   .order(ByteOrder.BIG_ENDIAN)
-//                                   .getInt();
-//        int secondValue = ByteBuffer.wrap(responseByteArray, 5, 4)
-//                                    .order(ByteOrder.BIG_ENDIAN)
-//                                    .getInt();
-//        switch (responseByteArray[0])
-//        {
-//            case INSERT_CHAR:
-//                builder.MessageType(MessageTypes.INSERT);
-//                logger.debug("Request: \t | " + MessageTypes.INSERT + " " + firstValue + " " + secondValue);
-//                break;
-//            case QUERY_CHAR:
-//                builder.MessageType(MessageTypes.QUERY);
-//                logger.debug("Request: \t | " + MessageTypes.QUERY + " " + firstValue + " " + secondValue);
-//                break;
-//            default:
-//                logger.error("Bad request: " + new String(responseByteArray));
-//                key.channel()
-//                   .close();
-//                break;
-//        }
-//
-//        Request request = builder.FirstValue(firstValue)
-//                                 .SecondValue(secondValue)
-//                                 .build();
-//
-//        SessionMemoryCache sessionMemoryCache = context.getSessionMemoryCache();
-//
-//        context.getWriteByteBuffer().clear();
-//        switch (request.getMessageType())
-//        {
-//            case INSERT ->
-//            {
-//                sessionMemoryCache.addPrice(request.getFirstValue(), request.getSecondValue());
-//                context.getWriteByteBuffer().putInt(73);
-//            }
-//            case QUERY ->
-//            {
-//                int average = sessionMemoryCache.getAveragePriceInRange(request.getFirstValue(), request.getSecondValue());
-//                context.getWriteByteBuffer().putInt(average);
-//            }
-//        }
-//        key.interestOps(SelectionKey.OP_WRITE);
-//    }
-//
-//
-//    public static void stopServer(Selector selector, ServerSocketChannel serverSocketChannel)
-//    {
-//        isRunning = false;
-//        logger.info("Shutting down...");
-//
-//        try // to shut down server Gracefully
-//        {
-//            selector.wakeup(); // Unblocks select()
-//            for (SelectionKey key : selector.keys())
-//            {
-//                if (key.isValid()) key.channel()
-//                                      .close();
-//            }
-//
-//            if (serverSocketChannel.isOpen())
-//            {
-//                serverSocketChannel.close();
-//                logger.warning("ServerSocketChannel is closed for server: " + serverSocketChannel.getLocalAddress());
-//
-//            }
-//
-//            if (selector.isOpen())
-//            {
-//                selector.close();
-//                logger.warning("Selector is closed for provider: " + selector.provider());
-//            }
-//
-//            logger.info("Gracefully shutdown server.");
-//        }
-//        catch (IOException e)
-//        {
-//            System.out.println("Error during shutdown: " + e.getMessage());
-//        }
-//    }
-//
-//    public void startServer(int port)
-//    {
-//        try // to start the server
-//        {
-//            logger.info("Starting server on port: " + port);
-//
-//            Selector selector = Selector.open();
-//            logger.info("Selector created for server: " + selector.provider());
-//
-//            ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
-//            serverSocketChannel.configureBlocking(false);
-//            serverSocketChannel.socket()
-//                               .bind(new InetSocketAddress(port));
-//            serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-//            logger.info("ServerSocketChannel created for server: " + selector.provider());
-//
-//            Runtime.getRuntime()
-//                   .addShutdownHook(new Thread(() -> stopServer(selector, serverSocketChannel)));
-//            logger.info("Graceful shutdown hook created for server: " + selector.provider());
-//
-//            while (isRunning)
-//            {
-//                selector.select();
-//
-//                Set<SelectionKey> selectedKeys = selector.selectedKeys();
-//                Iterator<SelectionKey> iterator = selectedKeys.iterator();
-//                while (iterator.hasNext())
-//                {
-//                    SelectionKey key = iterator.next();
-//                    iterator.remove();
-//                    acceptConnections(key);
-//                }
-//            }
-//        }
-//        catch (Exception e)
-//        {
-//            logger.warning("Error starting server on port:" + port);
-//        }
-//    }
-//}
+package protohackers.server.d2;
+
+import protohackers.Connection;
+import protohackers.ServerLogFormatter;
+import protohackers.ServerLogOptions;
+
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
+import lombok.Builder;
+import lombok.Getter;
+
+enum MessageTypes
+{
+    INSERT, QUERY
+}
+
+// Byte:  |  0  |  1     2     3     4  |  5     6     7     8  |
+// Type:  |char |         int32         |         int32         |
+@Getter
+@Builder
+class Request
+{
+    private final MessageTypes MessageType;
+    private final int FirstValue; // 32
+    private final int SecondValue; // 32
+
+    @Override // review format
+    public String toString()
+    {
+        return "%s, %d, %d".formatted(MessageType.toString(), FirstValue, SecondValue);
+    }
+}
+
+public class Server
+{
+    private static final int PORT = 42069;
+    private static final int CLIENTS = 5;
+    private static final ServerLogOptions logger = new ServerLogOptions(ServerLogFormatter.getLogger(ServerRunnable.class));
+
+    static void main()
+    {
+        new Server().start(PORT);
+    }
+
+    public static boolean isPrime(double number)
+    {
+        if (number != Math.floor(number) || number <= 1) return false;
+        BigInteger bigInt = BigInteger.valueOf((long) number);
+        return bigInt.isProbablePrime(100);
+    }
+
+    public void start(int port)
+    {
+        try (ServerSocket serverSocket = new ServerSocket(port))
+        {
+            logger.info("New Server connected to port | " + port);
+            Executor executor = Executors.newFixedThreadPool(CLIENTS);
+            while (!serverSocket.isClosed())
+            {
+                executor.execute(new ServerRunnable(serverSocket.accept()));
+            }
+        }
+        catch (Exception exception)
+        {
+            logger.error("Failed to start new Server on port | " + port);
+        }
+    }
+}
+
+
+class ServerRunnable implements Runnable
+{
+    Connection client;
+    ServerLogOptions logger;
+
+    public ServerRunnable(Socket socket) throws IOException
+    {
+        this.client = new Connection(socket);
+        this.logger = new ServerLogOptions(ServerLogFormatter.getLogger(ServerRunnable.class));
+    }
+
+    private String processMessage(String message)
+    {
+        try
+        {
+            return null;
+        }
+        catch (Exception e)
+        {
+            logger.debug("Message processing exception");
+            return null;
+        }
+    }
+
+    @Override
+    public void run()
+    {
+        try // to process client connection
+        {
+            String message;
+            while ((message = client.getReader().readLine()) != null)
+            {
+                logger.info("Received\t | " + message);
+                client.getWriter().println(message);
+                logger.info("Sent\t\t | " + message);
+            }
+        }
+        catch (IOException e)
+        {
+            logger.warning("Client disconnected\t   | " + client.getSocket().getInetAddress());
+        }
+    }
+}
+
+
+
+class SessionMemoryCache
+{
+    private final Map<Integer, Integer> treeMap; // Using TreeMap to keep timestamps ordered
+
+    public SessionMemoryCache()
+    {
+        this.treeMap = new TreeMap<>();
+    }
+
+    public void addPrice(int timestamp, int price)
+    {
+        this.treeMap.put(timestamp, price);
+    }
+
+    public Integer getPrice(int timestamp)
+    {
+        return this.treeMap.get(timestamp);
+    }
+
+    // mintime <= T <= maxtime
+    public Integer getAveragePriceInRange(int minTimestamp, int maxTimestamp)
+    {
+        Set<Integer> validTimestamps = treeMap.keySet()
+                                              .stream()
+                                              .filter(t -> minTimestamp <= t && t <= maxTimestamp)
+                                              .collect(Collectors.toSet());
+
+        if (validTimestamps.isEmpty()) return 0;
+
+        long sum = validTimestamps.stream()
+                                  .mapToLong(treeMap::get)
+                                  .sum();
+
+        return (int) (sum / validTimestamps.size());
+    }
+}
+

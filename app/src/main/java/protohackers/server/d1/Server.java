@@ -1,9 +1,13 @@
 package protohackers.server.d1;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import protohackers.Connection;
 import protohackers.ServerLogFormatter;
 import protohackers.ServerLogOptions;
@@ -16,9 +20,34 @@ import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+@Data // {"method":"isPrime","prime":false}
+@AllArgsConstructor
+class ResponseJSON
+{
+    private String method;
+    private boolean isPrime;
+}
+
+@Data // {"method":"isPrime","number":123}
+@JsonPropertyOrder({"method", "number"})
+class RequestJSON
+{
+    private String method;
+    private double number;
+
+    public RequestJSON(
+            @JsonProperty(value = "method", required = true)
+            String method,
+            @JsonProperty(value = "number", required = true)
+            double number)
+    {
+        this.method = method;
+        this.number = number;
+    }
+}
+
 public class Server
 {
-    // private static final String HOST = "localhost";
     private static final int PORT = 42069;
     private static final int CLIENTS = 5;
     private static final ServerLogOptions logger = new ServerLogOptions(ServerLogFormatter.getLogger(ServerRunnable.class));
@@ -53,7 +82,6 @@ public class Server
     }
 }
 
-
 class ServerRunnable implements Runnable
 {
     Connection client;
@@ -67,7 +95,7 @@ class ServerRunnable implements Runnable
 
     private String processMessage(String requestString, JsonMapper jsonMapper)
     {
-        try
+        try // to process message
         {
             RequestJSON requestJSON = jsonMapper.readValue(requestString, RequestJSON.class);
             if (!Objects.equals(requestJSON.getMethod(), "isPrime"))

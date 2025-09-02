@@ -12,7 +12,6 @@ import java.util.concurrent.Executors;
 
 public class Server
 {
-    // private static final String HOST = "localhost";
     private static final int PORT = 42069;
     private static final int CLIENTS = 5;
     private static final ServerLogOptions logger = new ServerLogOptions(ServerLogFormatter.getLogger(ServerRunnable.class));
@@ -35,15 +34,13 @@ public class Server
         }
         catch (Exception exception)
         {
-            logger.error("Faile to start new Server on port | " + port);
+            logger.error("Failed to start new Server on port | " + port);
         }
     }
 }
 
-
 class ServerRunnable implements Runnable
 {
-
     Connection client;
     ServerLogOptions logger;
 
