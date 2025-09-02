@@ -1,8 +1,7 @@
 package protohackers.server.d0;
 
-
-import lombok.Getter;
 import protohackers.ServerLogFormatter;
+import protohackers.Connection;
 import protohackers.ServerLogOptions;
 
 import java.io.*;
@@ -28,7 +27,7 @@ public class Server
         try (ServerSocket serverSocket = new ServerSocket(port))
         {
             logger.info("New Server connected to port | " + port);
-            Executor executor = Executors.newFixedThreadPool(5);
+            Executor executor = Executors.newFixedThreadPool(CLIENTS);
             while (!serverSocket.isClosed())
             {
                 executor.execute(new ServerRunnable(serverSocket.accept()));
@@ -41,59 +40,16 @@ public class Server
     }
 }
 
-@Getter
-class ClientConnection implements Closeable
-{
-    Socket socket;
-    PrintWriter writer;
-    BufferedReader reader;
-    ServerLogOptions logger;
-
-    public ClientConnection(Socket socket) throws IOException
-    {
-        this.socket = socket;
-        this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        this.writer = new PrintWriter(socket.getOutputStream(), true);
-        this.logger = new ServerLogOptions(ServerLogFormatter.getLogger(ServerRunnable.class));
-    }
-
-    @Override
-    public void close()
-    {
-        try (Writer writer = this.writer;
-             Reader reader = this.reader;
-             Socket socket = this.socket)
-        {
-            //  logger.debug(writer.toString());
-            //  logger.debug(reader.toString());
-            //  logger.debug(socket.toString());
-//            logger.debug("Client resources closed. | "
-//                    + writer.toString()
-//                    + reader.toString()
-//                    + socket.toString()
-//            );
-            logger.debug("Client resources closed | " + socket.getInetAddress());
-//            logger.debug("Client resources closed\t\t | " + reader.toString());
-//            logger.debug("Client resources closed\t\t | " +  writer.toString());
-
-        }
-        catch (IOException e)
-        {
-            logger.error(e.getMessage());
-        }
-    }
-}
-
 
 class ServerRunnable implements Runnable
 {
 
-    ClientConnection client;
+    Connection client;
     ServerLogOptions logger;
 
     public ServerRunnable(Socket socket) throws IOException
     {
-        this.client = new ClientConnection(socket);
+        this.client = new Connection(socket);
         this.logger = new ServerLogOptions(ServerLogFormatter.getLogger(ServerRunnable.class));
     }
 
@@ -113,7 +69,7 @@ class ServerRunnable implements Runnable
         }
         catch (IOException e)
         {
-            logger.warning("Client disconnected\t   | " + client.socket.getInetAddress());
+            logger.warning("Client disconnected\t   | " + client.getSocket().getInetAddress());
         }
     }
 }
