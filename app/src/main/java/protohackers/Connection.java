@@ -1,9 +1,9 @@
 package protohackers;
 
-import lombok.Getter;
+import lombok.*;
 
 import java.io.*;
-import java.net.Socket;
+import java.net.*;
 
 @Getter
 public class Connection implements Closeable

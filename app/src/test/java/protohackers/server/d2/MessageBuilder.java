@@ -1,7 +1,6 @@
 package protohackers.server.d2;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import java.nio.*;
 
 public class MessageBuilder
 {

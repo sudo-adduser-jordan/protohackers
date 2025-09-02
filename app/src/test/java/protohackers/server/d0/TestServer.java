@@ -1,13 +1,11 @@
 package protohackers.server.d0;
 
 import org.junit.jupiter.api.*;
-import protohackers.Connection;
-import protohackers.ServerLogFormatter;
-import protohackers.ServerLogOptions;
+import protohackers.*;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.util.ArrayList;
+import java.io.*;
+import java.net.*;
+import java.util.*;
 
 public class TestServer
 {
@@ -26,6 +24,12 @@ public class TestServer
         serverThread.start();
     }
 
+    @AfterAll // close server
+    public static void tearDownAll() throws InterruptedException
+    {
+        serverThread.join(1);
+    }
+
     @BeforeEach // setup clients and context
     public void setUpEach() throws IOException
     {
@@ -41,15 +45,8 @@ public class TestServer
     @AfterEach // close clients buffers and servers
     public void tearDown() throws IOException
     {
-        for (Connection socket : sockets) socket.close();
+        for (Connection socket : sockets) {socket.close();}
     }
-
-    @AfterAll // close server
-    public static void tearDownAll() throws InterruptedException
-    {
-        serverThread.join(1);
-    }
-
 
     @Test // if valid response
     public void testEcho()

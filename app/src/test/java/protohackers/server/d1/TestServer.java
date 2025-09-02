@@ -1,13 +1,11 @@
 package protohackers.server.d1;
 
 import org.junit.jupiter.api.*;
-import protohackers.Connection;
-import protohackers.ServerLogFormatter;
-import protohackers.ServerLogOptions;
+import protohackers.*;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.util.ArrayList;
+import java.io.*;
+import java.net.*;
+import java.util.*;
 
 public class TestServer
 {
@@ -18,6 +16,19 @@ public class TestServer
 
     private static Thread serverThread;
     private ArrayList<Connection> sockets;
+
+    @BeforeAll // start a server
+    public static void setUp()
+    {
+        serverThread = new Thread(() -> new Server().start(PORT));
+        serverThread.start();
+    }
+
+    @AfterAll // close server
+    public static void tearDownAll() throws InterruptedException
+    {
+        serverThread.join(1);
+    }
 
     @Test // if integer is prime
     public void unitTestIsPrime()
@@ -31,13 +42,6 @@ public class TestServer
         Assertions.assertFalse(Server.isPrime(-7), "Negative numbers are not prime");
         Assertions.assertFalse(Server.isPrime(4), "4 is not prime");
         Assertions.assertFalse(Server.isPrime(100), "100 is not prime");
-    }
-
-    @BeforeAll // start a server
-    public static void setUp()
-    {
-        serverThread = new Thread(() -> new Server().start(PORT));
-        serverThread.start();
     }
 
     @BeforeEach // setup clients and context
@@ -56,12 +60,6 @@ public class TestServer
     public void tearDown()
     {
         if (sockets != null) for (Connection socket : sockets) {socket.close();}
-    }
-
-    @AfterAll // close server
-    public static void tearDownAll() throws InterruptedException
-    {
-        serverThread.join(1);
     }
 
     @Test // if valid response
@@ -120,65 +118,62 @@ class JSONRequests
 {
     // Valid JSON string
     public static final String validJSON = """
-{"method":"isPrime","number":123}""";
+            {"method":"isPrime","number":123}""";
 
     public static final String validJSONResponse = """
-{"method":"isPrime","prime":false}""";
+            {"method":"isPrime","prime":false}""";
 
     // Invalid JSON strings
     public static final String invalidJSONMissingColon = """
-{"method":"isPrime","number"123}""";
+            {"method":"isPrime","number"123}""";
 
     public static final String invalidJSONTrailingComma = """
-{"method":"isPrime","number":123,}""";
+            {"method":"isPrime","number":123,}""";
 
     public static final String invalidJSONUnclosedBrace = """
-{"method":"isPrime","number":123""";
+            {"method":"isPrime","number":123""";
 
     public static final String invalidJSONExtraComma = """
-{"method":"isPrime","number":123,}""";
+            {"method":"isPrime","number":123,}""";
 
     public static final String invalidJSONMissingQuotes = """
-{method:"isPrime","number":123}""";
+            {method:"isPrime","number":123}""";
 
     public static final String invalidJSONWrongQuotes = """
-{'method':'isPrime','number':123}""";
+            {'method':'isPrime','number':123}""";
 
     public static final String invalidJSONEmptyObject = """
-{}""";
+            {}""";
 
     public static final String invalidJSONEmptyArray = """
-[]""";
+            []""";
 
     public static final String invalidJSONNumberAsString = """
-{"method":"isPrime","number":"123"}""";
+            {"method":"isPrime","number":"123"}""";
 
     public static final String invalidJSONExtraField = """
-{"method":"isPrime","number":123,"extra":"field"}""";
+            {"method":"isPrime","number":123,"extra":"field"}""";
 
     public static final String invalidJSONMissingMethod = """
-{"number":123}""";
+            {"number":123}""";
 
     public static final String invalidJSONMissingNumber = """
-{"method":"isPrime"}""";
+            {"method":"isPrime"}""";
 
     public static final String invalidJSONIncorrectType = """
-{"method":"isPrime","number":"notANumber"}""";
+            {"method":"isPrime","number":"notANumber"}""";
 
     public static final String invalidJSONArrayInsteadOfObject = """
-["method","isPrime","number",123]""";
+            ["method","isPrime","number",123]""";
 
     public static final String invalidJSONNestedMalformed = """
-{"method":"isPrime","parameters":{"number":123}""";
+            {"method":"isPrime","parameters":{"number":123}""";
 
     public static String[] getInvalidJSONRequests()
     {
-        return new String[]{invalidJSONMissingColon,
-                invalidJSONTrailingComma,
+        return new String[]{invalidJSONMissingColon, invalidJSONTrailingComma,
 //                invalidJSONUnclosedBrace,
-                invalidJSONExtraComma, invalidJSONMissingQuotes, invalidJSONWrongQuotes, invalidJSONEmptyObject,
-                invalidJSONEmptyArray,
-                invalidJSONNumberAsString,
+                invalidJSONExtraComma, invalidJSONMissingQuotes, invalidJSONWrongQuotes, invalidJSONEmptyObject, invalidJSONEmptyArray, invalidJSONNumberAsString,
 //                 invalidJSONExtraField,
                 invalidJSONMissingMethod, invalidJSONMissingNumber, invalidJSONIncorrectType, invalidJSONArrayInsteadOfObject, invalidJSONNestedMalformed};
     }

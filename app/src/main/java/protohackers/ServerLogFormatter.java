@@ -32,8 +32,7 @@ public class ServerLogFormatter extends Formatter
     {
         String timestamp = String.format("%1$tF %1$tT", new java.util.Date(record.getMillis()));
         String levelColor;
-        String levelStr = record.getLevel()
-                                .toString();
+        String levelStr = record.getLevel().toString();
 
         switch (levelStr)
         {

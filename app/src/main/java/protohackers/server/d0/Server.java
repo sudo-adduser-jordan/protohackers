@@ -1,14 +1,10 @@
 package protohackers.server.d0;
 
-import protohackers.ServerLogFormatter;
-import protohackers.Connection;
-import protohackers.ServerLogOptions;
+import protohackers.*;
 
 import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.net.*;
+import java.util.concurrent.*;
 
 public class Server
 {

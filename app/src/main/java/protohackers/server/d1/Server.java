@@ -1,24 +1,17 @@
 package protohackers.server.d1;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import protohackers.Connection;
-import protohackers.ServerLogFormatter;
-import protohackers.ServerLogOptions;
+import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.json.*;
+import lombok.*;
+import protohackers.*;
 
-import java.io.IOException;
-import java.math.BigInteger;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.Objects;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.io.*;
+import java.math.*;
+import java.net.*;
+import java.util.*;
+import java.util.concurrent.*;
 
 @Data // {"method":"isPrime","prime":false}
 @AllArgsConstructor

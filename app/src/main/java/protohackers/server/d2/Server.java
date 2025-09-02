@@ -1,22 +1,14 @@
 package protohackers.server.d2;
 
-import protohackers.Connection;
-import protohackers.ServerLogFormatter;
-import protohackers.ServerLogOptions;
+import lombok.*;
+import protohackers.*;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-
-import lombok.Builder;
-import lombok.Getter;
+import java.io.*;
+import java.math.*;
+import java.net.*;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.*;
 
 enum MessageTypes
 {
@@ -76,7 +68,6 @@ public class Server
     }
 }
 
-
 class ServerRunnable implements Runnable
 {
     Connection client;
@@ -121,8 +112,6 @@ class ServerRunnable implements Runnable
     }
 }
 
-
-
 class SessionMemoryCache
 {
     private final Map<Integer, Integer> treeMap; // Using TreeMap to keep timestamps ordered
@@ -152,9 +141,7 @@ class SessionMemoryCache
 
         if (validTimestamps.isEmpty()) return 0;
 
-        long sum = validTimestamps.stream()
-                                  .mapToLong(treeMap::get)
-                                  .sum();
+        long sum = validTimestamps.stream().mapToLong(treeMap::get).sum();
 
         return (int) (sum / validTimestamps.size());
     }
