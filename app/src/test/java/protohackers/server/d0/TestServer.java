@@ -43,7 +43,7 @@ public class TestServer
     }
 
     @AfterEach // close clients buffers and servers
-    public void tearDown() 
+    public void tearDown()
     {
         if (sockets != null) for (Connection socket : sockets) {socket.close();}
     }
