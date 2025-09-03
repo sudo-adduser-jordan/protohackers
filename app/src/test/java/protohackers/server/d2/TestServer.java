@@ -1,4 +1,4 @@
-package protohackers.server.d1;
+package protohackers.server.d2;
 
 import org.junit.jupiter.api.*;
 import protohackers.*;
@@ -14,7 +14,7 @@ public class TestServer
     private ArrayList<Connection> sockets;
     private static Thread serverThread;
 
-    private static final int HOST = "localhost";
+    private static final String HOST = "localhost";
     private static final int PORT = 12345;
     private static final int CLIENTS = 5;
 
@@ -35,20 +35,6 @@ public class TestServer
         serverThread.join(1);
     }
 
-    @Test // if integer is prime
-    public void unitTestIsPrime()
-    {
-        Assertions.assertTrue(Server.isPrime(2), "2 should be prime");
-        Assertions.assertTrue(Server.isPrime(13), "13 should be prime");
-        Assertions.assertTrue(Server.isPrime(17), "17 should be prime");
-
-        Assertions.assertFalse(Server.isPrime(1), "1 is not prime");
-        Assertions.assertFalse(Server.isPrime(0), "0 is not prime");
-        Assertions.assertFalse(Server.isPrime(-7), "Negative numbers are not prime");
-        Assertions.assertFalse(Server.isPrime(4), "4 is not prime");
-        Assertions.assertFalse(Server.isPrime(100), "100 is not prime");
-    }
-
     @BeforeEach // setup clients and context
     public void setUpEach() throws IOException
     {
@@ -67,8 +53,68 @@ public class TestServer
         if (sockets != null) for (Connection socket : sockets) socket.close();
     }
 
-    @Test // if valid response
-    public void testValidJSON()
+    @Test
+    void testAddAndGetPrice() {
+        SessionMemoryCache cache = new SessionMemoryCache();
+        cache.addPrice(1, 100);
+        Assertions.assertEquals(100, cache.getPrice(1));
+        Assertions.assertNull(cache.getPrice(2));
+    }
+
+    @Test // if returns a valid int   // mintime <= T <= maxtime
+    void testAveragePriceInRange() {
+        SessionMemoryCache sessionCache= new SessionMemoryCache();
+        sessionCache.addPrice(1, 100);
+        sessionCache.addPrice(3, 200);
+        sessionCache.addPrice(5, 300);
+
+        Assertions.assertEquals(200, sessionCache.getAveragePriceInRange(2, 4));
+        Assertions.assertEquals(200, sessionCache.getAveragePriceInRange(1, 5));
+        Assertions.assertEquals(0, sessionCache.getAveragePriceInRange(10, 20));
+    }
+
+    @Test
+    void testCreateInsertMessage() {
+        int timestamp = 12345;
+        int price = 678;
+        byte[] message = TestMessage.createInsertMessage(timestamp, price);
+        Assertions.assertEquals(9, message.length);
+        Assertions.assertEquals((byte) 'I', message[0]);
+
+        int extractedTimestamp = ByteBuffer.wrap(message, 1, 4).getInt();
+        Assertions.assertEquals(timestamp, extractedTimestamp);
+
+        int extractedPrice = ByteBuffer.wrap(message, 5, 4).getInt();
+        Assertions.assertEquals(price, extractedPrice);
+    }
+
+    @Test
+    void testCreateQueryMessage() {
+        int minTime = 100;
+        int maxTime = 200;
+        byte[] message = TestMessage.createQueryMessage(minTime, maxTime);
+        Assertions.assertEquals(9, message.length);
+        Assertions.assertEquals((byte) 'Q', message[0]);
+
+        int extractedMinTime = ByteBuffer.wrap(message, 1, 4).getInt();
+        Assertions.assertEquals(minTime, extractedMinTime);
+
+        int extractedMaxTime = ByteBuffer.wrap(message, 5, 4).getInt();
+        Assertions.assertEquals(maxTime, extractedMaxTime);
+    }
+
+    @Test
+    void testDecodeResponse() {
+        int value = 123456789;
+        ByteBuffer buffer = ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(value);
+        byte[] response = buffer.array();
+
+        int decodedValue = TestMessage.decodeResponse(response);
+        Assertions.assertEquals(value, decodedValue);
+    }
+
+    @Test // if valid responses
+    public void testRequests()
     {
         for (Connection socket : sockets)
         {
@@ -86,10 +132,9 @@ public class TestServer
             }
         }
     }
-
 }
 
-class MessageBuilder
+class TestMessage
 {
     // Create an insert message (9 bytes)
     public static byte[] createInsertMessage(int timestamp, int price)

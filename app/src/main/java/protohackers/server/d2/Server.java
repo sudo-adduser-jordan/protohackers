@@ -34,20 +34,17 @@ class Request
 
 public class Server
 {
+    private static final ServerLogOptions logger = new ServerLogOptions(ServerLogFormatter.getLogger(ServerRunnable.class));
     private static final int PORT = 42069;
     private static final int CLIENTS = 5;
-    private static final ServerLogOptions logger = new ServerLogOptions(ServerLogFormatter.getLogger(ServerRunnable.class));
+
+    private static final int REQUEST_LENGTH = 9; // char, 2 ints
+    private static final int RESPONSE_LENGTH = 4; // 1 int
+
 
     static void main()
     {
         new Server().start(PORT);
-    }
-
-    public static boolean sumAverage(double number)
-    {
-        if (number != Math.floor(number) || number <= 1) return false;
-        BigInteger bigInt = BigInteger.valueOf((long) number);
-        return bigInt.isProbablePrime(100);
     }
 
     public void start(int port)
