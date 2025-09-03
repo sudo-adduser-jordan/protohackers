@@ -11,7 +11,7 @@ sdk install java 21.0.2-graalce
 sdk install gradle 9.0.0
 ```
 
-# run server
+# run a server
 
 ```sh
 gradle d0
