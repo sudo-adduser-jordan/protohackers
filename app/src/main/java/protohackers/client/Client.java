@@ -1,11 +1,13 @@
 package protohackers.client;
 
+import lombok.extern.slf4j.*;
+
 import java.io.*;
 import java.net.*;
 
+@Slf4j
 public class Client
 {
-
     public static void main(String[] args)
     {
         String host = "localhost";
@@ -21,24 +23,23 @@ public class Client
             writer.flush();
 
             String responseLine = reader.readLine();
-            System.out.println("Response: " + responseLine);
+            log.info("Response: " + responseLine);
 
             // You can send multiple requests:
             String[] testRequests = {"echo", "echo", "echo", "echo", "echo",};
 
             for (String req : testRequests)
             {
-                System.out.println("Sending: " + req.trim());
+                log.info("Sending: " + req.trim());
                 writer.write(req);
                 writer.flush();
 
                 String resp = reader.readLine();
-                System.out.println("Received: " + resp);
+                log.info("Received: " + resp);
             }
         }
         catch (IOException e)
         {
-
             e.printStackTrace();
         }
     }

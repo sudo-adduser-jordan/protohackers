@@ -1,18 +1,22 @@
 package protohackers.server.d1;
 
+import lombok.extern.slf4j.*;
 import org.junit.jupiter.api.*;
+import org.slf4j.*;
 import protohackers.*;
 
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
+@Slf4j
 public class TestServer
 {
     private static final int CLIENTS = 5;
     private static final int PORT = 12345;
     private static final String HOST = "localhost";
-    private static final ServerLogOptions logger = new ServerLogOptions(ServerLogFormatter.getLogger(TestServer.class));
+//    private static final ServerLogOptions logger = new ServerLogOptions(ServerLogFormatter.getLogger(TestServer.class));
+//private static final Logger logger = LoggerFactory.getLogger(TestServer.class);
 
     private static Thread serverThread;
     private ArrayList<Connection> sockets;
@@ -77,7 +81,7 @@ public class TestServer
             }
             catch (IOException e)
             {
-                logger.info("Client disconnected | " + socket.getSocket().getInetAddress());
+                log.info("Client disconnected | " + socket.getSocket().getInetAddress());
                 Assertions.assertTrue(socket.getSocket().isClosed() || !socket.getSocket().isConnected());
             }
         }
@@ -105,7 +109,7 @@ public class TestServer
                 }
                 catch (IOException e)
                 {
-                    logger.info("Client disconnected | " + socket.getSocket().getInetAddress());
+                    log.info("Client disconnected | " + socket.getSocket().getInetAddress());
                     Assertions.assertTrue(socket.getSocket().isClosed() || !socket.getSocket().isConnected());
                 }
             }

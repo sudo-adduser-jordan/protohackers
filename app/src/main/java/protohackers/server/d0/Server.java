@@ -1,18 +1,19 @@
 package protohackers.server.d0;
 
+import lombok.extern.slf4j.*;
 import protohackers.*;
 
 import java.io.*;
 import java.net.*;
 import java.util.concurrent.*;
 
+@Slf4j
 public class Server
 {
     private static final int PORT = 42069;
     private static final int CLIENTS = 5;
-    private static final ServerLogOptions logger = new ServerLogOptions(ServerLogFormatter.getLogger(ServerRunnable.class));
 
-    static void main()
+    public static void main(String[] args)
     {
         new Server().start(PORT);
     }
@@ -21,7 +22,7 @@ public class Server
     {
         try (ServerSocket serverSocket = new ServerSocket(port))
         {
-            logger.info("New Server connected to port | " + port);
+            log.info("New Server connected to port | {}", port);
             Executor executor = Executors.newFixedThreadPool(CLIENTS);
             while (!serverSocket.isClosed())
             {
@@ -30,20 +31,20 @@ public class Server
         }
         catch (Exception exception)
         {
-            logger.error("Failed to start new Server on port | " + port);
+            log.error("Failed to start new Server on port | {}", port);
         }
     }
 }
 
+
+@Slf4j
 class ServerRunnable implements Runnable
 {
     Connection client;
-    ServerLogOptions logger;
 
     public ServerRunnable(Socket socket) throws IOException
     {
         this.client = new Connection(socket);
-        this.logger = new ServerLogOptions(ServerLogFormatter.getLogger(ServerRunnable.class));
     }
 
     @Override
@@ -54,15 +55,15 @@ class ServerRunnable implements Runnable
             String message;
             while ((message = client.getReader().readLine()) != null)
             {
-                logger.info("Received\t | " + message);
+                log.info("Received\t | {}", message);
                 client.getWriter().println(message);
-                logger.info("Sent\t\t | " + message);
+                log.info("Sent\t\t | {}", message);
                 client.close();
             }
         }
         catch (IOException e)
         {
-            logger.warning("Client disconnected\t   | " + client.getSocket().getInetAddress());
+            log.trace("Client disconnected\t   | {}", client.getSocket().getInetAddress());
         }
     }
 }

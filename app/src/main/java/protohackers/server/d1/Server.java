@@ -5,6 +5,8 @@ import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.json.*;
 import lombok.*;
+import lombok.extern.slf4j.*;
+import org.slf4j.*;
 import protohackers.*;
 
 import java.io.*;
@@ -39,13 +41,13 @@ class RequestJSON
     }
 }
 
+@Slf4j
 public class Server
 {
     private static final int PORT = 42069;
     private static final int CLIENTS = 5;
-    private static final ServerLogOptions logger = new ServerLogOptions(ServerLogFormatter.getLogger(ServerRunnable.class));
 
-    static void main()
+    public static void main(String[] args)
     {
         new Server().start(PORT);
     }
@@ -61,7 +63,7 @@ public class Server
     {
         try (ServerSocket serverSocket = new ServerSocket(port))
         {
-            logger.info("New Server connected to port | " + port);
+            log.info("New Server connected to port | {}", port);
             Executor executor = Executors.newFixedThreadPool(CLIENTS);
             while (!serverSocket.isClosed())
             {
@@ -70,20 +72,19 @@ public class Server
         }
         catch (Exception exception)
         {
-            logger.error("Failed to start new Server on port | " + port);
+            log.error("Failed to start new Server on port | {}", port);
         }
     }
 }
 
+@Slf4j
 class ServerRunnable implements Runnable
 {
     Connection client;
-    ServerLogOptions logger;
 
     public ServerRunnable(Socket socket) throws IOException
     {
         this.client = new Connection(socket);
-        this.logger = new ServerLogOptions(ServerLogFormatter.getLogger(ServerRunnable.class));
     }
 
     private String processMessage(String requestString, JsonMapper jsonMapper)
@@ -101,7 +102,7 @@ class ServerRunnable implements Runnable
         }
         catch (JsonProcessingException e)
         {
-            logger.debug("JSON processing exception");
+            log.debug("JSON processing exception");
             return null;
         }
     }
@@ -114,7 +115,7 @@ class ServerRunnable implements Runnable
             String message;
             while ((message = client.getReader().readLine()) != null)
             {
-                logger.info("Received\t | " + message);
+                log.info("Received\t | {}", message);
 
                 JsonMapper jsonMapper = JsonMapper.builder()
                                                   .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
@@ -126,20 +127,20 @@ class ServerRunnable implements Runnable
                 if (null == response)
                 {
                     client.getWriter().println(message);
-                    logger.info("Sent\t\t | " + message);
+                    log.info("Sent\t\t | {}", message);
                     client.getSocket().close();
                     client.close();
                 }
                 else
                 {
                     client.getWriter().println(response);
-                    logger.info("Sent\t\t | " + response);
+                    log.info("Sent\t\t | {}", response);
                 }
             }
         }
         catch (IOException e)
         {
-            logger.warning("Client disconnected\t   | " + client.getSocket().getInetAddress());
+//            log.warning("Client disconnected\t   | " + client.getSocket().getInetAddress());
         }
     }
 }

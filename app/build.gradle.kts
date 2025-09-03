@@ -13,7 +13,8 @@ dependencies {
     implementation(libs.guava)
     implementation("org.slf4j:slf4j-api:2.0.17")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.19.2")
-    implementation("org.slf4j:slf4j-simple:2.0.17")
+//    implementation("org.slf4j:slf4j-simple:2.0.17")
+    implementation("ch.qos.logback:logback-classic:1.5.18")
 
     testImplementation(libs.junit.jupiter)
 

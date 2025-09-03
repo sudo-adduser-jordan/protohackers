@@ -1,24 +1,28 @@
 package protohackers;
 
 import lombok.*;
+import lombok.extern.slf4j.*;
 
 import java.io.*;
 import java.net.*;
+import java.nio.*;
 
+@Slf4j
 @Getter
 public class Connection implements Closeable
 {
     Socket socket;
     PrintWriter writer;
     BufferedReader reader;
-    ServerLogOptions logger;
+    ByteBuffer byteBuffer;
+
 
     public Connection(Socket socket) throws IOException
     {
         this.socket = socket;
         this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         this.writer = new PrintWriter(socket.getOutputStream(), true);
-        this.logger = new ServerLogOptions(ServerLogFormatter.getLogger(Connection.class));
+        this.byteBuffer = ByteBuffer.allocate(1024);
     }
 
     @Override
@@ -26,16 +30,17 @@ public class Connection implements Closeable
     {
         try (Writer writer = this.writer;
              Reader reader = this.reader;
-             Socket socket = this.socket)
+             Socket socket = this.socket;)
         {
-//            logger.debug("Client resources closed | " + socket.getInetAddress());
-//            logger.debug("Client resources closed\t\t | " + reader.toString());
-//            logger.debug("Client resources closed\t\t | " + writer.toString());
+            byteBuffer.clear();
+//            log.debug("Client resources closed | " + socket.getInetAddress());
+//            log.debug("Client resources closed\t\t | " + reader.toString());
+//            log.debug("Client resources closed\t\t | " + writer.toString());
 
         }
         catch (IOException e)
         {
-            logger.error(e.getMessage());
+//            log.error(e.getMessage());
         }
     }
 }
