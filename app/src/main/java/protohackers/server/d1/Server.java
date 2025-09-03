@@ -127,20 +127,20 @@ class ServerRunnable implements Runnable
                 if (null == response)
                 {
                     client.getWriter().println(message);
-                    log.info("Sent\t\t | {}", message);
                     client.getSocket().close();
                     client.close();
                 }
                 else
                 {
                     client.getWriter().println(response);
-                    log.info("Sent\t\t | {}", response);
                 }
+
+                log.info("Sent\t\t | {}", response);
             }
         }
         catch (IOException e)
         {
-//            log.warning("Client disconnected\t   | " + client.getSocket().getInetAddress());
+            log.error("Client disconnected\t   | {}", client.getSocket().getInetAddress());
         }
     }
 }

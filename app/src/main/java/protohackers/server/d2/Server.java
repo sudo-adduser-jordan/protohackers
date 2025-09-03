@@ -55,8 +55,6 @@ class ServerRunnable implements Runnable
         this.sessionMemoryCache = new SessionMemoryCache();
     }
 
-
-
     @Override
     public void run()
     {
@@ -102,7 +100,6 @@ class ServerRunnable implements Runnable
             log.trace("Client disconnected\t   | {}", client.getSocket().getInetAddress());
         }
     }
-
 }
 
 class SessionMemoryCache
