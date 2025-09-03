@@ -1,46 +1,20 @@
 package protohackers.server.d2;
 
+import com.sun.net.httpserver.*;
 import lombok.*;
 import protohackers.*;
 
 import java.io.*;
-import java.math.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.*;
-
-enum MessageTypes
-{
-    INSERT, QUERY
-}
-
-// Byte:  |  0  |  1     2     3     4  |  5     6     7     8  |
-// Type:  |char |         int32         |         int32         |
-@Getter
-@Builder
-class Request
-{
-    private final MessageTypes MessageType;
-    private final int FirstValue; // 32
-    private final int SecondValue; // 32
-
-    @Override // review format
-    public String toString()
-    {
-        return "%s, %d, %d".formatted(MessageType.toString(), FirstValue, SecondValue);
-    }
-}
 
 public class Server
 {
     private static final ServerLogOptions logger = new ServerLogOptions(ServerLogFormatter.getLogger(ServerRunnable.class));
     private static final int PORT = 42069;
     private static final int CLIENTS = 5;
-
-    private static final int REQUEST_LENGTH = 9; // char, 2 ints
-    private static final int RESPONSE_LENGTH = 4; // 1 int
-
 
     static void main()
     {
@@ -69,24 +43,41 @@ class ServerRunnable implements Runnable
 {
     Connection client;
     ServerLogOptions logger;
+    SessionMemoryCache sessionMemoryCache;
+
+    public final int REQUEST_LENGTH = 9; // char, 2 ints
+    public final int RESPONSE_LENGTH = 4; // 1 int
 
     public ServerRunnable(Socket socket) throws IOException
     {
         this.client = new Connection(socket);
+        this.sessionMemoryCache = new SessionMemoryCache();
         this.logger = new ServerLogOptions(ServerLogFormatter.getLogger(ServerRunnable.class));
     }
 
+
+    // Byte:  |  0  |  1     2     3     4  |  5     6     7     8  |
+    // Type:  |char |         int32         |         int32         |
     private String processMessage(String message)
     {
-        try
-        {
+        if (null == message) return null;
+
+        if (REQUEST_LENGTH != message.length()) return null;
+
+        if ('I' == message.charAt(0))
+        { // insert
+            int timestamp = Integer.parseInt(message.substring(1, 4));
+            int price = Integer.parseInt(message.substring(5, 8));
+            sessionMemoryCache.addPrice(timestamp, price);
             return null;
         }
-        catch (Exception e)
-        {
-            logger.debug("Message processing exception");
-            return null;
+        if ('Q' == message.charAt(0))
+        { // query
+            int mintime = Integer.parseInt(message.substring(1, 4));
+            int maxtime = Integer.parseInt(message.substring(5, 8));
+            return sessionMemoryCache.getAveragePriceInRange(mintime, maxtime).toString();
         }
+        return null;
     }
 
     @Override
@@ -98,8 +89,17 @@ class ServerRunnable implements Runnable
             while ((message = client.getReader().readLine()) != null)
             {
                 logger.info("Received\t | " + message);
-                client.getWriter().println(message);
-                logger.info("Sent\t\t | " + message);
+                String response = processMessage(message);
+                if (null == response)
+                {
+                    client.getWriter().println("420");
+                    client.close();
+                }
+                else
+                {
+                    client.getWriter().println(response);
+                }
+                logger.info("Sent\t\t | " + response);
             }
         }
         catch (IOException e)
