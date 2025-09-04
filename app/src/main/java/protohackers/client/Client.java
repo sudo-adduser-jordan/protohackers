@@ -17,30 +17,29 @@ public class Client
              BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())))
         {
-
-            String request = "echo"; // test with a prime number
-            writer.write(request);
+            String message = "echo";
+            writer.write(message);
             writer.flush();
 
             String responseLine = reader.readLine();
-            log.info("Response: " + responseLine);
+            log.info("Response: {}", responseLine);
 
-            // You can send multiple requests:
-            String[] testRequests = {"echo", "echo", "echo", "echo", "echo",};
+            String[] messages = {"echo", "echo", "echo", "echo", "echo",};
 
-            for (String req : testRequests)
+            for (String request : messages)
             {
-                log.info("Sending: " + req.trim());
-                writer.write(req);
+                log.info("Sending: {}", request.trim());
+                writer.write(request);
                 writer.flush();
 
-                String resp = reader.readLine();
-                log.info("Received: " + resp);
+                String response = reader.readLine();
+                log.info("Received: {}", response);
             }
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            log.error("Socket unable to connect to host: {}", host);
+            log.error("Socket unable to connect to port: {}", port);
         }
     }
 }
