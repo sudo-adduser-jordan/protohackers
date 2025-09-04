@@ -22,8 +22,9 @@ public class Server
     {
         try (ServerSocket serverSocket = new ServerSocket(port))
         {
-            log.info("New Server connected to port | {}", port);
+            log.info("new Server connected to port          | {}", port);
             Executor executor = Executors.newFixedThreadPool(CLIENTS);
+            log.info("newFixedThreadPool created for Server | {}", serverSocket.getInetAddress());
             while (!serverSocket.isClosed())
             {
                 executor.execute(new ServerRunnable(serverSocket.accept()));
@@ -55,15 +56,15 @@ class ServerRunnable implements Runnable
             String message;
             while ((message = client.getReader().readLine()) != null)
             {
-                log.info("Received\t | {}", message);
+                log.info("Received | {}", message);
                 client.getWriter().println(message);
-                log.info("Sent\t\t | {}", message);
+                log.info("Sent     | {}", message);
                 client.close();
             }
         }
         catch (IOException e)
         {
-            log.trace("Client disconnected\t   | {}", client.getSocket().getInetAddress());
+            log.trace("Client disconnected | {}", client.getSocket().getInetAddress());
         }
     }
 }
