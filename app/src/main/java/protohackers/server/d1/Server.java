@@ -29,16 +29,6 @@ class RequestJSON
 {
     private String method;
     private double number;
-
-    public RequestJSON(
-            @JsonProperty(value = "method", required = true)
-            String method,
-            @JsonProperty(value = "number", required = true)
-            double number)
-    {
-        this.method = method;
-        this.number = number;
-    }
 }
 
 @Slf4j
