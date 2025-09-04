@@ -32,7 +32,7 @@ public class Server
         }
         catch (Exception exception)
         {
-            log.error("Failed to start new Server on port | {}", port);
+            log.error("Failed to start new Server on port   | {}", port);
         }
     }
 }
